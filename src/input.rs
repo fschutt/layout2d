@@ -1,5 +1,7 @@
 extern crate glium;
 
+use ui_screen::UiScreen;
+
 /// Determines which keys are pressed currently (modifiers, etc.)
 #[derive(Debug)]
 pub struct KeyboardState {
@@ -11,6 +13,15 @@ pub struct KeyboardState {
     pub keys: Vec<char>,
 }
 
+impl KeyboardState {
+    pub fn new() -> Self {
+        Self { 
+            modifiers: Vec::new(), 
+            hidden_keys: Vec::new(), 
+            keys: Vec::new() 
+        }
+    }
+}
 /// Keyboard modifier key, reduced set suited for desktop UIs.
 /// Handles things such as AltGr -> split into "Alt" and "Shift"
 /// RShift and LShift are generalized to "Shift", same as Ctrl
@@ -54,8 +65,6 @@ pub struct MouseState {
     pub left_down: bool,
     pub right_down: bool,
     pub middle_down: bool,
-    pub btn_4_down: bool,
-    pub btn_5_down: bool,
     /// How far has the mouse scrolled in x direction
     pub mouse_scroll_x: f32,
     /// How far has the mouse scrolled in y direction
@@ -75,8 +84,6 @@ impl MouseState {
             left_down: false,
             right_down: false,
             middle_down: false,
-            btn_4_down: false,
-            btn_5_down: false,
             mouse_scroll_x: 0.0,
             mouse_scroll_y: 0.0,
             scroll_speed_x: scroll_speed_x,
@@ -85,6 +92,7 @@ impl MouseState {
     }
 }
 /// State, size, etc of the window, for comparing to the last frame
+#[derive(Debug)]
 pub struct WindowState {
     width: u32,
     height: u32,
@@ -104,35 +112,77 @@ impl WindowState {
 pub(crate) fn handle_event(event: &glium::glutin::Event,
                            window: &mut WindowState,
                            keyboard: &mut KeyboardState, 
-                           mouse: &mut MouseState) 
+                           mouse: &mut MouseState, 
+                           ui_screen: &mut UiScreen) 
 -> bool
 {
+    // update the state of the input information
     use glium::glutin::Event::*;
-    println!("{:?}", mouse);
     match *event {
-        MouseMoved(x, y) => { handle_mouse_move(mouse, x, y); false},
-        MouseWheel(delta, phase) => { handle_mouse_scroll(mouse, delta, phase); true },
-        KeyboardInput(state, code, _) => { handle_kb_input(keyboard, state, code); true },
-        ReceivedCharacter(c) => { handle_kb_char(keyboard, c); true}
-        _ => { true },
+        MouseMoved(x, y)                => { handle_mouse_move(mouse, x, y); },
+        MouseWheel(delta, phase)        => { handle_mouse_scroll(mouse, delta, phase); },
+        KeyboardInput(state, code, _)   => { handle_kb_input(keyboard, state, code); },
+        ReceivedCharacter(c)            => { handle_kb_char(keyboard, c); }
+        MouseInput(state, button)       => { handle_mouse_click(mouse, state, button); }
+        Resized(width, height)          => { handle_resize(window, width, height); }
+        _ => {  },
     }
 
-    // now that the state is updated, we have enough information to re-layout the frame ... or not.
+    // now that the state is updated, we have enough information to re-layout the frame
+    println!("{:?}", window);
 
     // println!("{:?}", keyboard);
 
     // todo: after mouse and events are updated, don't just return, but rather call look for 
     // function pointers, hovering, active state, etc.
+    ui_screen.layout()
+}
+
+#[inline]
+fn handle_resize(window: &mut WindowState, width: u32, height: u32)
+{
+    window.width = width;
+    window.height = height;
 }
 
 /// Updates mouse movement
+#[inline]
 fn handle_mouse_move(mouse: &mut MouseState, x: i32, y: i32) 
 {
     mouse.x = x;
     mouse.y = y;
 }
 
+/// Updates the mouse state on a click
+#[inline]
+fn handle_mouse_click(mouse: &mut MouseState, state: glium::glutin::ElementState, button: glium::glutin::MouseButton)
+{
+    use glium::glutin::MouseButton::*;
+    use glium::glutin::ElementState::*;
+
+    match state {
+        Pressed => {
+            match button {
+                Left => { mouse.left_down = true; },
+                Right => { mouse.right_down = true; },
+                Middle => { mouse.middle_down = true; },
+                Other(_) => { },
+            }
+        },
+
+        Released => {
+            match button {
+                Left => { mouse.left_down = false; },
+                Right => { mouse.right_down = false; },
+                Middle => { mouse.middle_down = false; },
+                Other(_) => { },
+            }
+        },
+    }
+}
+
 /// Updates mouse scroll
+#[inline]
 fn handle_mouse_scroll(mouse: &mut MouseState, delta: glium::glutin::MouseScrollDelta, phase: glium::glutin::TouchPhase)
 {
     if phase == glium::glutin::TouchPhase::Moved {
@@ -151,6 +201,7 @@ fn handle_mouse_scroll(mouse: &mut MouseState, delta: glium::glutin::MouseScroll
 
 /// On keyboard input, we get both a KeyboardInput event as well as a ReceivedCharacter event.
 /// This function only checks for possible keyboard modifiers, otherwise forgets about the key
+#[inline]
 fn handle_kb_input(keyboard: &mut KeyboardState, 
                    state: glium::glutin::ElementState, 
                    code: u8)
@@ -176,6 +227,7 @@ fn handle_kb_input(keyboard: &mut KeyboardState,
 }
 
 /// Checks if the key is really a modifier key, reduces the granularity
+#[inline]
 fn check_modifier_key_u8(key: u8) -> Option<ReducedKbModifier>
 {
     match key {
@@ -218,6 +270,7 @@ fn check_modifier_key_u8(key: u8) -> Option<ReducedKbModifier>
 
 /// Handles character input (via string). Some characters are wrongly recognized as characters
 /// when in reality, they are control characters.
+#[inline]
 fn handle_kb_char(keyboard: &mut KeyboardState, key: char)
 {
     let modifier_char = check_modifier_key_char(&key, keyboard);
@@ -234,6 +287,7 @@ fn handle_kb_char(keyboard: &mut KeyboardState, key: char)
 
 /// The second parameter tells if the key is both a control key and a character,
 /// that were pressed at the same time
+#[inline]
 fn check_modifier_key_char(key: &char, keyboard: &mut KeyboardState) -> Option<char>
 {
     // todo: check if any modifiers are active and fix duplicate key ids

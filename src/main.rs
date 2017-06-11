@@ -12,14 +12,10 @@ const INITIAL_WIDTH: u32 = 800;
 fn main() {
 
     // Initialize keyboard & mouse
-    let mut keyboard_state = input::KeyboardState { 
-                                modifiers: Vec::new(), 
-                                hidden_keys: Vec::new(), 
-                                keys: Vec::new() 
-                            };
-
+    let mut keyboard_state = input::KeyboardState::new();
     let mut mouse_state = input::MouseState::new(10.0, 10.0);
     let mut window_state = input::WindowState::new(INITIAL_WIDTH, INITIAL_HEIGHT);
+    let mut ui_screen = ui_screen::UiScreen::new();
 
     use glium::DisplayBuild;
     let display = glium::glutin::WindowBuilder::new()
@@ -31,7 +27,7 @@ fn main() {
         .unwrap();
 
     for event in display.wait_events() {
-        if input::handle_event(&event, &mut window_state, &mut keyboard_state, &mut mouse_state) {
+        if input::handle_event(&event, &mut window_state, &mut keyboard_state, &mut mouse_state, &mut ui_screen) {
             render(&display);
         }
     }
