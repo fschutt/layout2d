@@ -1,24 +1,37 @@
+#![feature(drop_types_in_const)]
+
 extern crate glium;
 extern crate cgmath;
 
 pub mod ui_screen;
+pub mod input;
 
-static mut GLOB_MOUSE_POS: (i32, i32) = (0, 0);
-
-/// Global keyboard modifiers
+const INITIAL_HEIGHT: u32 = 600;
+const INITIAL_WIDTH: u32 = 800;
 
 fn main() {
+
+    // Initialize keyboard & mouse
+    let mut keyboard_state = input::KeyboardState { 
+                                modifiers: Vec::new(), 
+                                hidden_keys: Vec::new(), 
+                                keys: Vec::new() 
+                            };
+
+    let mut mouse_state = input::MouseState::new(10.0, 10.0);
+    let mut window_state = input::WindowState::new(INITIAL_WIDTH, INITIAL_HEIGHT);
+
     use glium::DisplayBuild;
     let display = glium::glutin::WindowBuilder::new()
         .with_vsync()
-        .with_dimensions(800, 600)
+        .with_dimensions(INITIAL_WIDTH, INITIAL_HEIGHT)
         .with_title("File Explorer")
         .with_multisampling(4)
         .build_glium()
         .unwrap();
 
     for event in display.wait_events() {
-        if handle_event(&event) {
+        if input::handle_event(&event, &mut window_state, &mut keyboard_state, &mut mouse_state) {
             render(&display);
         }
     }
@@ -31,11 +44,3 @@ fn render(display: &glium::Display) {
     target.finish().unwrap();
 }
 
-/// Handles the event, updates the UI, then returns if the UI has to be rerendered
-fn handle_event(event: &glium::glutin::Event) -> bool {
-    use glium::glutin::Event;
-    match *event {
-        Event::MouseMoved(x, y) => { unsafe { GLOB_MOUSE_POS = (x, y) }; false},
-        _ => { println!("{:?}", event); true },
-    }
-}
