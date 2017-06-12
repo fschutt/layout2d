@@ -109,6 +109,7 @@ impl WindowState {
 }
 
 /// Handles the event, updates the UI, then returns if the UI has to be rerendered
+#[inline]
 pub(crate) fn handle_event(event: &glium::glutin::Event,
                            window: &mut WindowState,
                            keyboard: &mut KeyboardState, 
@@ -129,12 +130,6 @@ pub(crate) fn handle_event(event: &glium::glutin::Event,
     }
 
     // now that the state is updated, we have enough information to re-layout the frame
-    println!("{:?}", window);
-
-    // println!("{:?}", keyboard);
-
-    // todo: after mouse and events are updated, don't just return, but rather call look for 
-    // function pointers, hovering, active state, etc.
     ui_screen.layout()
 }
 
