@@ -1,8 +1,7 @@
-#![feature(drop_types_in_const)]
-
 #[macro_use]
 extern crate glium;
 extern crate cgmath;
+extern crate rctree;
 
 pub mod ui_screen;
 pub mod input;

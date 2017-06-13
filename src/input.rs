@@ -22,6 +22,7 @@ impl KeyboardState {
         }
     }
 }
+
 /// Keyboard modifier key, reduced set suited for desktop UIs.
 /// Handles things such as AltGr -> split into "Alt" and "Shift"
 /// RShift and LShift are generalized to "Shift", same as Ctrl
