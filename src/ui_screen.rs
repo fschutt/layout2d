@@ -1,6 +1,8 @@
-//! Definition for UI screen
+/// UI screen 
+#[derive(Debug)]
 pub struct UiScreen {
-
+    pub min_width: u32,
+    pub min_height: u32,
 }
 
 impl UiScreen {
@@ -9,7 +11,8 @@ impl UiScreen {
     #[inline]
     pub fn new() -> Self {
         Self {
-
+            min_width: 600,
+            min_height: 400,
         }
     }
 
@@ -18,7 +21,7 @@ impl UiScreen {
     pub(crate) fn layout(&mut self)
     -> bool 
     {
-        // todo
+
         true
     }
 }

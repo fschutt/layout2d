@@ -1,5 +1,6 @@
 #![feature(drop_types_in_const)]
 
+#[macro_use]
 extern crate glium;
 extern crate cgmath;
 
