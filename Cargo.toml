@@ -7,4 +7,4 @@ authors = ["Felix Schütt <felix.schuett@maps4print.com>"]
 glium = "*"
 cgmath = { version = "0.14.1", features = ["use_simd"] }
 rctree = { git = "https://github.com/SimonSapin/rust-forest" }
-webrender = { git = "https://github.com/servo/webrender" }
+lazy_static = "0.2"

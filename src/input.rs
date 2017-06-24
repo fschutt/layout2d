@@ -308,7 +308,7 @@ fn check_modifier_key_char(key: &char, keyboard: &mut KeyboardState) -> Option<c
         39  => { Some('ä')},
         45  => { Some('ß')},
         59  => { Some('ö')},
-        27  => { Some('ü')}, // same as Esc??
+     /* 27  => { Some('ü')}, // same as Esc?? */
         16  => { Some('p')},
         15  => { Some('o')},
         9   => { Some('i')},
