@@ -2,11 +2,13 @@
 //! Uses rctree for reference counted nodes
 extern crate rctree;
 extern crate glium;
+extern crate cgmath;
 
 use rctree::NodeRef;
 use node_data::NodeData;
 use debug::DebugColor;
 use renderer::Vertex;
+use cgmath::{Matrix4, Vector4, Point3};
 
 /// UI screen 
 #[derive(Debug)]
@@ -17,10 +19,10 @@ pub struct UiScreen {
 /// A finite rectangle in pixel coordinates that will end up on the screen
 #[derive(Debug)]
 pub struct Rect {
-    top: u32,
-    bottom: u32,
-    left: u32,
-    right: u32,
+    /// Top left corner
+    tl: Point3<f32>,
+    /// Bottom right corner
+    br: Point3<f32>,
 }
 
 impl ::std::convert::Into<Vec<Vertex>> for Rect {
@@ -28,16 +30,25 @@ impl ::std::convert::Into<Vec<Vertex>> for Rect {
     -> Vec<Vertex>
     {
         return vec![
-            Vertex { position: [self.top as f32,    self.left as f32]  }, /*top left*/
-            Vertex { position: [self.bottom as f32, self.left as f32]  }, /*bottom left*/
-            Vertex { position: [self.top as f32,    self.right as f32] }, /*top right*/
+            Vertex { position: [self.tl.y,    self.tl.x] }, /*top left*/
+            Vertex { position: [self.br.y,    self.tl.x] }, /*bottom left*/
+            Vertex { position: [self.tl.y,    self.br.x] }, /*top right*/
             
-            Vertex { position: [self.bottom as f32, self.right as f32] }, /*bottom right*/
-            Vertex { position: [self.top as f32,    self.right as f32] }, /*top right*/
-            Vertex { position: [self.bottom as f32, self.left as f32]  }, /*bottom left*/
+            Vertex { position: [self.br.y,    self.br.x] }, /*bottom right*/
+            Vertex { position: [self.tl.y,    self.br.x] }, /*top right*/
+            Vertex { position: [self.br.y,    self.tl.x] }, /*bottom left*/
         ];
     }
 }
+
+/*
+impl ::std::ops::Mul<cgmath::Matrix4<f32>> for Rect {
+    type Output = Rect;
+    fn mul(self, rhs: cgmath::Matrix4<f32>) -> Self::Output {
+
+    }
+}
+*/
 
 impl UiScreen {
 
@@ -76,12 +87,37 @@ impl UiScreen {
         // todo: use the &self to convert the final layout into rectangles
         // that are then submitted to the renderer
 
-        let rect = Rect {
-            top: 200,
-            bottom: 400,
-            right: 200,
-            left: 400,
+        let rect = Rect { 
+            tl: Point3 { y: 200.0, /* top */ x: 400.0 /* left*/, z: 0.0 },     /* todo: z-indexing */
+            br: Point3 { y: 400.0, /* bottom */ x: 200.0 /* right*/, z: 0.0 },
         };
+
+        // construct tranformation matrix
+        let matrix = Matrix4::<f32> {
+            x: Vector4{ x: 1.0, 
+                        y: 0.0, 
+                        z: 0.0,
+                        w: 0.0},
+
+            y: Vector4{ x: 0.0,
+                        y: 1.0,
+                        z: 0.0,
+                        w: 0.0},
+
+            z: Vector4{ x: 0.0,
+                        y: 0.0,
+                        z: 1.0,
+                        w: 0.0,
+            },
+
+            w: Vector4 { x: 0.0,
+                         y: 0.0,
+                         z: 0.0,
+                         w: 1.0,
+            }
+        };
+
+        // let res = rect * matrix;
 
         let shape: Vec<Vertex> = rect.into();
         glium::VertexBuffer::new(display, &shape).unwrap()
