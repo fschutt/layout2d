@@ -95,8 +95,8 @@ impl MouseState {
 /// State, size, etc of the window, for comparing to the last frame
 #[derive(Debug)]
 pub struct WindowState {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl WindowState {
@@ -109,7 +109,7 @@ impl WindowState {
     }
 }
 
-/// Handles the event, updates the UI, then returns if the UI has to be rerendered
+/// Handles the event, updates the UI, then returns if the window was not closed (false on closed)
 #[inline]
 pub(crate) fn handle_event(event: &glium::glutin::Event,
                            window: &mut WindowState,
@@ -121,6 +121,7 @@ pub(crate) fn handle_event(event: &glium::glutin::Event,
     // update the state of the input information
     use glium::glutin::Event::*;
     match *event {
+        Closed                          => { return false; }
         MouseMoved(x, y)                => { handle_mouse_move(mouse, x, y); },
         MouseWheel(delta, phase)        => { handle_mouse_scroll(mouse, delta, phase); },
         KeyboardInput(state, code, _)   => { handle_kb_input(keyboard, state, code); },
@@ -131,7 +132,9 @@ pub(crate) fn handle_event(event: &glium::glutin::Event,
     }
 
     // now that the state is updated, we have enough information to re-layout the frame
-    ui_screen.layout()
+    ui_screen.layout();
+
+    true
 }
 
 #[inline]

@@ -8,3 +8,7 @@ glium = "*"
 cgmath = { version = "0.14.1", features = ["use_simd"] }
 rctree = { git = "https://github.com/SimonSapin/rust-forest" }
 lazy_static = "0.2"
+
+[profile.release]
+lto = true
+panic = 'abort'
