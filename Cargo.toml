@@ -9,6 +9,7 @@ rctree = { git = "https://github.com/SimonSapin/rust-forest" }
 lazy_static = "0.2"
 simd = "0.2.0"
 rusttype = "0.2.1"
+rand = "0.3.15"
 
 [profile.release]
 lto = true

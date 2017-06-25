@@ -1,12 +1,17 @@
+#![feature(test)]
+#![feature(rand)]
+
 #[macro_use]
 extern crate glium;
 extern crate rctree;
 extern crate simd;
+extern crate test;
 
 pub mod ui_screen;
 pub mod input;
 pub mod node_data;
 pub mod renderer;
+pub mod rect;
 mod debug;
 
 use rctree::NodeRef;
