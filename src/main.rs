@@ -1,9 +1,7 @@
 #[macro_use]
 extern crate glium;
-#[macro_use]
-extern crate lazy_static;
-extern crate cgmath;
 extern crate rctree;
+extern crate simd;
 
 pub mod ui_screen;
 pub mod input;
@@ -35,6 +33,8 @@ fn main() {
         ui_screen.root.append(NodeRef::new(NodeData::new(None, None, Some(400), None, DebugColor::red())));
         // Main explorer view, stretches all sides
         ui_screen.root.append(NodeRef::new(NodeData::new(None, None, None, None, DebugColor::blue() )));
+
+        // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);
 
         /// when adding animations, change this to poll events
         for event in renderer.display.wait_events() {
