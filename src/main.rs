@@ -1,11 +1,11 @@
 #![feature(test)]
-#![feature(rand)]
 
 #[macro_use]
 extern crate glium;
 extern crate rctree;
 extern crate simd;
 extern crate test;
+extern crate image;
 
 pub mod ui_screen;
 pub mod input;
@@ -41,9 +41,11 @@ fn main() {
 
         // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);
 
+        let texture_angle = renderer.load_image_png(include_bytes!("assets/widget_tree_view_arrow.svg.png"));
+
         /// when adding animations, change this to poll events
         for event in renderer.display.wait_events() {
             input::handle_event(&event, &mut window_state, &mut keyboard_state, &mut mouse_state, &mut ui_screen);
-            renderer.render(&window_state, &ui_screen);
+            renderer.render(&window_state, &ui_screen, Some(&texture_angle));
         }
 }

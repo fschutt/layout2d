@@ -1,23 +1,30 @@
 extern crate glium;
+extern crate image;
 
 use glium::DisplayBuild;
 use input::WindowState;
 use ui_screen::UiScreen;
+use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vertex {
     pub position: [f32; 3],
+    pub tex_coords: [f32; 2],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex, position, tex_coords);
 
-const VERTEX_SHADER_SRC: &'static str = include_str!("shaders/vertex_basic.glsl");
-const FRAGMENT_SHADER_SRC: &'static str  = include_str!("shaders/fragment_basic.glsl");
+// shaders to be compiled at renderer startup
+const VERTEX_SHADER_SRC_BASIC: &'static str = include_str!("shaders/vertex_basic.glsl");
+const VERTEX_SHADER_SRC_IMAGE: &'static str = include_str!("shaders/vertex_image.glsl");
+const FRAGMENT_SHADER_SRC_BASIC: &'static str  = include_str!("shaders/fragment_basic.glsl");
+const FRAGMENT_SHADER_SRC_IMAGE: &'static str  = include_str!("shaders/fragment_image.glsl");
+
 const INDEX_BUFFER: glium::index::NoIndices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
 pub struct Renderer {
     pub display: glium::Display,
-    shader_program: glium::Program,
+    shader_programs: HashMap<&'static str, glium::Program>,
 }
 
 impl Renderer {
@@ -36,16 +43,36 @@ impl Renderer {
             .build_glium()
             .unwrap();
 
+        // list of shader programs we will use in this 
+        let mut shader_programs = HashMap::<&'static str, glium::Program>::new();
+
+        shader_programs.insert("basic", glium::Program::from_source(&disp, VERTEX_SHADER_SRC_BASIC, FRAGMENT_SHADER_SRC_BASIC, None).unwrap());
+        shader_programs.insert("image", glium::Program::from_source(&disp, VERTEX_SHADER_SRC_IMAGE, FRAGMENT_SHADER_SRC_IMAGE, None).unwrap());
+        
         Self {
-            shader_program: glium::Program::from_source(&disp, VERTEX_SHADER_SRC, FRAGMENT_SHADER_SRC, None).unwrap(),
+            shader_programs: shader_programs,
             display: disp,
         }
+    }
+
+    /// Loads an image from an in-memory buffer
+    /// Use it: "renderer.load_image_png(include_bytes!("my_image.png"))"
+    pub fn load_image_png(&self, input: &'static [u8])
+    -> glium::Texture2d 
+    {
+        use std::io::Cursor;
+        let image = image::load(Cursor::new(input),
+                                image::PNG).unwrap().to_rgba();
+        let image_dimensions = image.dimensions();
+        let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
+        glium::texture::Texture2d::new(&self.display, image).unwrap()
     }
 
     /// Renders to the screen
     pub fn render(&self, 
                   window_state: &WindowState, 
-                  ui_screen: &UiScreen)
+                  ui_screen: &UiScreen,
+                  image: Option<&glium::Texture2d>)
     {
         use glium::Surface;
         use glium::draw_parameters::DrawParameters;
@@ -56,15 +83,41 @@ impl Renderer {
         // get vertices, must be changed every draw call, sadly
         let vertices = ui_screen.into_vertex_buffer(&self.display);
 
-        let uniforms = uniform!( 
-            window_width: window_state.width as f32, 
-            window_height: window_state.height as f32
+        let current_shader = { if image.is_some() {
+            self.shader_programs.get("image").unwrap()
+        } else {
+            self.shader_programs.get("basic").unwrap()
+        }};
+
+        // choose uniforms based on image availability
+        // this should be seperated so that every shader has his own uniform list
+        let uniforms_normal = uniform!(
+                window_width: window_state.width as f32, 
+                window_height: window_state.height as f32,
         );
 
-        target.draw(&vertices, &INDEX_BUFFER, &self.shader_program, &uniforms, &DrawParameters {
-            smooth: Some(glium::draw_parameters::Smooth::Nicest),
-            .. Default::default()
-        }).unwrap();
+        let uniforms_image = { if let Some(image) = image {
+            Some(uniform!( 
+                window_width: window_state.width as f32, 
+                window_height: window_state.height as f32,
+                tex: image,
+                transparency: 0.6_f32))
+        } else { None }};
+
+        if let Some(uniforms_image) = uniforms_image {
+            // draw with image
+            target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_image, &DrawParameters {
+                smooth: Some(glium::draw_parameters::Smooth::Nicest),
+                blend: glium::draw_parameters::Blend::alpha_blending(),
+                .. Default::default()
+            }).unwrap();
+        } else {
+           // draw normal
+           target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_normal, &DrawParameters {
+               smooth: Some(glium::draw_parameters::Smooth::Nicest),
+               .. Default::default()
+           }).unwrap(); 
+        }
 
         target.finish().unwrap();
     }

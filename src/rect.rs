@@ -4,12 +4,12 @@ extern crate rand;
 extern crate glium;
 
 use renderer::Vertex;
-use test::Bencher;
 
 /// A finite rectangle in pixel coordinates that will end up on the screen
 #[derive(Debug)]
 pub struct Rect {
-    z_index: f32,
+    /// Z-index is an int in order to achieve z-order sortability
+    z_index: u32,
     /// x coordinates - as an array because of simd layout
     /// tl, tr, bl, br 
     x: [f32; 4],
@@ -19,8 +19,9 @@ pub struct Rect {
 }
 
 impl Rect {
+
     /// Creates a new rectangle
-    pub fn new(top: f32, bottom: f32, left: f32, right: f32, z: f32)
+    pub fn new(top: f32, bottom: f32, left: f32, right: f32, z: u32)
     -> Self
     {
         Self {
@@ -30,37 +31,6 @@ impl Rect {
         }
     }
 
-/*
-    pub fn rotate_center_no_simd(&mut self, in_angle: f32)
-    {
-        let center_y = ((self.tr.y - self.bl.y) * 0.5) + self.bl.y;
-        let center_x = ((self.tr.x - self.bl.x) * 0.5) + self.bl.x;
-
-        self.tl.x -= center_x; self.tr.x -= center_x; self.bl.x -= center_x; self.br.x -= center_x;
-        self.tl.y -= center_y; self.tr.y -= center_y; self.bl.y -= center_y; self.br.y -= center_y;
-
-        // calculate rotation
-        let k_angle = in_angle.to_radians();
-        let s = k_angle.sin();
-        let c = k_angle.cos();
-
-        let tl_x = (self.tl.x * c) - (self.tl.y * s);
-        let tr_x = (self.tr.x * c) - (self.tr.y * s);
-        let bl_x = (self.bl.x * c) - (self.bl.y * s);
-        let br_x = (self.br.x * c) - (self.br.y * s);
-
-        let tl_y = (self.tl.x * s) + (self.tl.y * c);
-        let tr_y = (self.tr.x * s) + (self.tr.y * c);
-        let bl_y = (self.bl.x * s) + (self.bl.y * c);
-        let br_y = (self.br.x * s) + (self.br.y * c);
-
-        self.tl.x = tl_x; self.tr.x = tr_x; self.bl.x = bl_x; self.br.x = br_x;
-        self.tl.y = tl_y; self.tr.y = tr_y; self.bl.y = bl_y; self.br.y = br_y;
-
-        self.tl.x += center_x; self.tr.x += center_x; self.bl.x += center_x; self.br.x += center_x;
-        self.tl.y += center_y; self.tr.y += center_y; self.bl.y += center_y; self.br.y += center_y;
-    }
-*/
     // rotates the rectangle around its center
     pub fn rotate_center(&mut self, in_angle: f32)
     {
@@ -89,14 +59,6 @@ impl Rect {
         simd_y_dir.store(&mut self.y, 0);
     }
 
-/*
-    pub fn translate_no_simd(&mut self, x: f32, y: f32)
-    {
-        self.tr.x += x; self.tl.x += x; self.br.x += x; self.bl.x += x;
-        self.tr.y += y; self.tl.y += y; self.br.y += x; self.bl.y += y;
-    }
-*/
-
     // translates a rectangle
     pub fn translate(&mut self, x: f32, y: f32)
     {
@@ -113,19 +75,27 @@ impl ::std::convert::Into<Vec<Vertex>> for Rect {
     -> Vec<Vertex>
     {
         return vec![
-            Vertex { position: [self.x[0],    self.y[0], self.z_index] }, /*top left*/
-            Vertex { position: [self.x[2],    self.y[2], self.z_index] }, /*bottom left*/
-            Vertex { position: [self.x[1],    self.y[1], self.z_index] }, /*top right*/
+            Vertex { position: [self.x[0],    self.y[0], self.z_index as f32],
+                     tex_coords: [0.0, 1.0]                             }, /*top left*/
+            Vertex { position: [self.x[2],    self.y[2], self.z_index as f32],
+                     tex_coords: [0.0, 0.0]                             }, /*bottom left*/
+            Vertex { position: [self.x[1],    self.y[1], self.z_index as f32],
+                     tex_coords: [1.0, 1.0]                             }, /*top right*/
             
-            Vertex { position: [self.x[3],    self.y[3], self.z_index] }, /*bottom right*/
-            Vertex { position: [self.x[1],    self.y[1], self.z_index] }, /*top right*/
-            Vertex { position: [self.x[2],    self.y[2], self.z_index] }, /*bottom left*/
+            Vertex { position: [self.x[3],    self.y[3], self.z_index as f32],
+                     tex_coords: [1.0, 0.0]                             }, /*bottom right*/
+            Vertex { position: [self.x[1],    self.y[1], self.z_index as f32],
+                     tex_coords: [1.0, 1.0]                             }, /*top right*/
+            Vertex { position: [self.x[2],    self.y[2], self.z_index as f32],
+                     tex_coords: [0.0, 0.0]                             }, /*bottom left*/
         ];
     }
 }
 
+// without SIMD: ~23 µs
+// with SIMD: ~14 µs
 #[bench]
-fn bench_rotate_center(b: &mut Bencher) {
+fn bench_rotate_center(b: &mut test::Bencher) {
     let mut rand_angles = Vec::new();
     for _ in 0..1000 {
         rand_angles.push(rand::random::<f32>());
@@ -140,26 +110,10 @@ fn bench_rotate_center(b: &mut Bencher) {
     })
 }
 
-/*
+// without SIMD: ~3 µs
+// with SIMD: ~1.4 µs
 #[bench]
-fn bench_rotate_center_no_simd(b: &mut Bencher) {
-    let mut rand_angles = Vec::new();
-    for _ in 0..1000 {
-        rand_angles.push(rand::random::<f32>());
-    }
-
-    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0);
-
-    b.iter(|| { 
-        for elem in rand_angles.iter() {
-            rect.rotate_center_no_simd(*elem);
-        }
-    })
-}
-*/
-
-#[bench]
-fn bench_translate(b: &mut Bencher) {
+fn bench_translate(b: &mut test::Bencher) {
     let mut rand_angles = Vec::new();
     for _ in 0..1000 {
         rand_angles.push(rand::random::<f32>());
@@ -173,21 +127,3 @@ fn bench_translate(b: &mut Bencher) {
         }
     })
 }
-
-/*
-#[bench]
-fn bench_translate_no_simd(b: &mut Bencher) {
-    let mut rand_angles = Vec::new();
-    for _ in 0..1000 {
-        rand_angles.push(rand::random::<f32>());
-    }
-
-    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0);
-
-    b.iter(|| { 
-        for elem in rand_angles.iter() {
-            rect.translate_no_simd(*elem, elem / 2.0);
-        }
-    })
-}
-*/

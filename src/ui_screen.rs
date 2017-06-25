@@ -52,9 +52,8 @@ impl UiScreen {
     {
         // todo: use the &self to convert the final layout into rectangles
         // that are then submitted to the renderer
-        
-        
-        let rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0);
+        // top: f32, bottom: f32, left: f32, right: f32, z: u32
+        let rect = Rect::new(200.0, 210.0, 400.0, 410.0, 0);
         let shape: Vec<Vertex> = rect.into();
         glium::VertexBuffer::new(display, &shape).unwrap()
     }

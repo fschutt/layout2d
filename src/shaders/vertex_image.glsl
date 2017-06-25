@@ -16,5 +16,6 @@ void main() {
     float x_pos = (position[0] / window_width_new) - 1.0;
     float y_pos = ((window_height_new - position[1]) / window_height_new);
     
+    v_tex_coords = tex_coords;
     gl_Position = vec4(x_pos, y_pos, position[2], 1.0);
 }

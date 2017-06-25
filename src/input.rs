@@ -287,7 +287,7 @@ fn handle_kb_char(keyboard: &mut KeyboardState, key: char)
 /// The second parameter tells if the key is both a control key and a character,
 /// that were pressed at the same time
 #[inline]
-fn check_modifier_key_char(key: &char, keyboard: &mut KeyboardState) -> Option<char>
+fn check_modifier_key_char(key: &char, _: &mut KeyboardState) -> Option<char>
 {
     // todo: check if any modifiers are active and fix duplicate key ids
 
