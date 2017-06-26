@@ -95,13 +95,13 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     let (mut width, mut height) =  {
         if let Some(parent) = current.parent() {
             if parent.borrow().flex_direction == FlexDirection::Row { 
-                (*parent_width / sibling_count as f32, *parent_height)
+                (*remaining_width / (sibling_count - sibling_index) as f32, *remaining_height)
             } else { 
-                (*parent_width, *parent_height / sibling_count as f32)
+                (*remaining_width, *remaining_height / (sibling_count - sibling_index) as f32)
             }
         } else {
             // root node
-            (*parent_width, *parent_height)
+            (*remaining_width, *remaining_height)
         }
     };
 
@@ -136,7 +136,6 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         }
     }
 
-
     // calculate offset for top and left
     let (offset_top, offset_left)  = {
         if let Some(parent) = current.parent() {
@@ -154,11 +153,9 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         } else { (0.0, 0.0) }
     };
 
-
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
     let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, cur_z, current.borrow().debug_color);
-    println!("sibling {:?}/{:?}, width: {:?}, height: {:?}, remaining width: {:?}, remaining height: {:?}", sibling_index, sibling_count, width, height, *remaining_width, remaining_height);
 
     // iterate children nodes
     let sibling_count = current.children().count();

@@ -33,6 +33,7 @@ fn main() {
 
         // Main explorer view, stretches all sides
         ui_screen.root.append(NodeRef::new(NodeData::new(
+            /* */
             None, None, None, None, None, None, 
             FlexDirection::Row, DebugColor::blue() )));
 
