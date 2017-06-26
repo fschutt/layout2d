@@ -108,7 +108,7 @@ impl Renderer {
 
         let draw_parameters = DrawParameters {
                 smooth: Some(glium::draw_parameters::Smooth::Nicest),
-                /* polygon_mode: glium::PolygonMode::Line, */
+                polygon_mode: glium::PolygonMode::Line,
                 depth: glium::Depth {
                     test: glium::draw_parameters::DepthTest::IfLess,
                     write: true,

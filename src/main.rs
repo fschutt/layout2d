@@ -46,7 +46,7 @@ fn main() {
             // navigation side bar
             let navigation_pane = NodeRef::new(NodeData::new(
                 None, None, None, None, None, None, 
-                FlexDirection::Column, DebugColor::green()));
+                FlexDirection::Column, DebugColor::red()));
 
             // file list
             let file_list_view = NodeRef::new(NodeData::new(
@@ -54,10 +54,16 @@ fn main() {
                 FlexDirection::Column, DebugColor::yellow()));
     
     // drawing order
-    ui_screen.root.append(top_bar_wrapper.clone());
-    ui_screen.root.append(explorer_wrapper.clone());
-        explorer_wrapper.append(navigation_pane.clone());
-        explorer_wrapper.append(file_list_view.clone());
+        explorer_wrapper.append(navigation_pane);
+        explorer_wrapper.append(file_list_view);
+    ui_screen.root.append(top_bar_wrapper);
+    ui_screen.root.append(explorer_wrapper);
+
+/*
+    for desc in ui_screen.root.descendants() {
+        println!("desc - {:?}", desc);
+    }
+*/
 
     // ------------------ end constructing UI screen
 

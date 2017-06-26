@@ -151,19 +151,21 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     }
 
     // calculate offset for top and left
-    let (offset_top, offset_left)  = {
+    let (offset_top, offset_left) = {
         if let Some(parent) = current.parent() {
             if parent.borrow().flex_direction == FlexDirection::Row {
-                let offset_w = parent_width - *remaining_width;
                 *remaining_width -= width;
+                let offset_w = parent_width - *remaining_width;
                 (0.0, offset_w)
             } else {
-                let offset_h = parent_height - *remaining_height;
                 *remaining_height -= height;
+                let offset_h = parent_height - *remaining_height;
                 (offset_h, 0.0)
             }
         } else { (0.0, 0.0) }
     };
+
+    println!("{:?} - {:?}", offset_top, offset_left);
 
     // z sorting is done by recursively dividing the range between max_z and 
     // min_z into segments proportional to the siblings - this way the children won't overlap the parent
