@@ -31,19 +31,24 @@ pub struct Renderer {
 impl Renderer {
     
     /// Creates a new renderer
-    pub fn new(width: u32, height: u32)
+    /// hidden if the window should be hidden
+    pub fn new(width: u32, height: u32, visible: bool, vsync: bool)
     -> Self
     {
-        let disp = glium::glutin::WindowBuilder::new()
-            .with_srgb(Some(false))
+        let mut disp = glium::glutin::WindowBuilder::new()
+            .with_visibility(visible)
             .with_min_dimensions(200, 50)
-            .with_vsync()
             .with_dimensions(width, height)
             .with_title("File Explorer")
+            .with_srgb(Some(false))
             .with_multisampling(4)
-            .with_depth_buffer(24)
-            .build_glium()
-            .unwrap();
+            .with_depth_buffer(24);
+
+        if vsync {
+            disp = disp.with_vsync();
+        }
+
+        let disp = disp.build_glium().unwrap();
 
         // list of shader programs we will use in this 
         let mut shader_programs = HashMap::<&'static str, glium::Program>::new();
@@ -82,8 +87,11 @@ impl Renderer {
         let mut target = self.display.draw();
         target.clear_color_and_depth((1.0, 1.0, 1.0, 1.0), 1.0);
 
+        use rect::IntoVertexBuffer;
+
         // get vertices, must be changed every draw call, sadly
-        let vertices = ui_screen.into_vertex_buffer(&self.display);
+        let rects = ui_screen.into_rectangles();
+        let vertices = rects.into_vertices(&self.display);
 
         let current_shader = { if image.is_some() {
             self.shader_programs.get("image").unwrap()
@@ -108,11 +116,12 @@ impl Renderer {
 
         let draw_parameters = DrawParameters {
                 smooth: Some(glium::draw_parameters::Smooth::Nicest),
-                polygon_mode: glium::PolygonMode::Line,
+                /* polygon_mode: glium::PolygonMode::Line, */
                 depth: glium::Depth {
                     test: glium::draw_parameters::DepthTest::IfLess,
                     write: true,
-                    .. Default::default()
+                    range: (0.0, 1.0),
+                    clamp: glium::draw_parameters::DepthClamp::NoClamp,
                 },
                 .. Default::default()};
 

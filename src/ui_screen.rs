@@ -3,11 +3,12 @@
 extern crate rctree;
 extern crate glium;
 extern crate simd;
+extern crate rand;
+extern crate test;
 
 use rctree::NodeRef;
 use node_data::{NodeData, FlexDirection};
 use debug::DebugColor;
-use renderer::Vertex;
 use rect::Rect;
 use input::WindowState;
 
@@ -56,8 +57,8 @@ impl UiScreen {
     }
 
     /// Converts the UI into a vertex buffer
-    pub fn into_vertex_buffer(&self, display: &glium::Display)
-    -> glium::VertexBuffer<Vertex>
+    pub fn into_rectangles(&self)
+    -> Vec<Rect>
     {
         let mut max_width = self.root.borrow().width.unwrap().clone();
         let mut max_height = self.root.borrow().height.unwrap().clone();
@@ -69,19 +70,10 @@ impl UiScreen {
         let root_sibling_count = 0;
         let root_level_children = 1;
 
-        let display_list = ui_screen_to_dp_list(
-                                &self.root, min_z_index, max_z_index, 
-                                root_level_children, root_sibling_count, 
-                                &parent_width, &parent_height,
-                                &mut max_width, &mut max_height
-                           );
-
-        let mut vertices: Vec<Vertex> = Vec::<Vertex>::new();
-        for rect in display_list {
-            vertices.append(&mut rect.into());
-        }
-
-        glium::VertexBuffer::new(display, &vertices).unwrap()
+        ui_screen_to_dp_list(&self.root, min_z_index, max_z_index, 
+                             root_level_children, root_sibling_count, 
+                             &parent_width, &parent_height,
+                             &mut max_width, &mut max_height)
     }
 
 }
@@ -165,7 +157,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         } else { (0.0, 0.0) }
     };
 
-    println!("{:?} - {:?}", offset_top, offset_left);
+    // println!("{:?} - {:?}", offset_top, offset_left);
 
     // z sorting is done by recursively dividing the range between max_z and 
     // min_z into segments proportional to the siblings - this way the children won't overlap the parent
@@ -195,4 +187,53 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     rectangles.push(cur_rect);
 
     return rectangles;
+}
+
+// without rendering: 36 ns / iter
+// with rendering (use "vblank_mode=0 cargo bench") to get correct results: ~1.9 ms
+#[bench]
+fn bench_ui_screen_layout_simple(b: &mut test::Bencher) {
+
+    use input;
+
+    const INITIAL_WIDTH: u32 = 600;
+    const INITIAL_HEIGHT: u32 = 800;
+    let mut window_state = input::WindowState::new(INITIAL_WIDTH, INITIAL_HEIGHT);
+
+    // Construct the explorer UI
+    let mut ui_screen = UiScreen::new(INITIAL_WIDTH, INITIAL_HEIGHT)
+                            .with_root_as_column();
+
+    // Top bar, 100 - 200 pixels tall, stretches full window
+    let top_bar_wrapper = NodeRef::new(NodeData::new(
+            None, None, None, None, None, None, 
+            FlexDirection::Column, DebugColor::green()));
+
+    // Main explorer view, stretches all sides
+    let explorer_wrapper = NodeRef::new(NodeData::new(
+        None, None, None, None, None, None, 
+        FlexDirection::Row, DebugColor::blue()));
+
+            // navigation side bar
+            let navigation_pane = NodeRef::new(NodeData::new(
+                Some(500.0), None, Some(700.0), None, None, None, 
+                FlexDirection::Column, DebugColor::red()));
+
+            // file list
+            let file_list_view = NodeRef::new(NodeData::new(
+                None, None, None, None, Some(50.0), None, 
+                FlexDirection::Column, DebugColor::blue()));
+
+    // drawing order
+    explorer_wrapper.append(navigation_pane);
+    explorer_wrapper.append(file_list_view);
+    ui_screen.root.append(top_bar_wrapper);
+    ui_screen.root.append(explorer_wrapper);
+
+    b.iter(|| {
+            let event = glium::glutin::Event::Resized(rand::random::<u32>(), rand::random::<u32>());
+            input::handle_event(&event, &mut window_state, &mut ui_screen);
+            let _ = ui_screen.into_rectangles();
+        }
+    )
 }

@@ -133,21 +133,30 @@ impl ::std::convert::Into<Vec<Vertex>> for Rect {
     }
 }
 
+pub trait IntoVertexBuffer {
+    fn into_vertices(self, display: &glium::Display) -> glium::VertexBuffer<Vertex>;
+}
+
+impl IntoVertexBuffer for Vec<Rect> {
+    fn into_vertices(self, display: &glium::Display) -> glium::VertexBuffer<Vertex> 
+    {
+        let mut vertices: Vec<Vertex> = Vec::<Vertex>::new();
+        for rect in self {
+            vertices.append(&mut rect.into());
+        }
+
+        glium::VertexBuffer::new(display, &vertices).unwrap()
+    }
+}
+
 // without SIMD: ~23 µs
 // with SIMD: ~14 µs
 #[bench]
 fn bench_rotate_center(b: &mut test::Bencher) {
-    let mut rand_angles = Vec::new();
-    for _ in 0..1000 {
-        rand_angles.push(rand::random::<f32>());
-    }
-
     let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0, DebugColor::yellow());
 
     b.iter(|| { 
-        for elem in rand_angles.iter() {
-            rect.rotate_center(*elem);
-        }
+        rect.rotate_center(rand::random::<f32>());
     })
 }
 
@@ -155,16 +164,9 @@ fn bench_rotate_center(b: &mut test::Bencher) {
 // with SIMD: ~1.4 µs
 #[bench]
 fn bench_translate(b: &mut test::Bencher) {
-    let mut rand_angles = Vec::new();
-    for _ in 0..1000 {
-        rand_angles.push(rand::random::<f32>());
-    }
-
     let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0, DebugColor::yellow());
 
     b.iter(|| { 
-        for elem in rand_angles.iter() {
-            rect.translate(*elem, elem / 2.0);
-        }
+        rect.translate(rand::random::<f32>(), rand::random::<f32>());
     })
 }

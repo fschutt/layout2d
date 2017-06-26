@@ -27,7 +27,7 @@ fn main() {
 
     // Initialize keyboard & mouse
     let mut window_state = input::WindowState::new(INITIAL_WIDTH, INITIAL_HEIGHT);
-    let renderer = Renderer::new(INITIAL_WIDTH, INITIAL_HEIGHT);
+    let renderer = Renderer::new(INITIAL_WIDTH, INITIAL_HEIGHT, true, true);
 
     // Construct the explorer UI
     let mut ui_screen = UiScreen::new(INITIAL_WIDTH, INITIAL_HEIGHT)
@@ -45,13 +45,13 @@ fn main() {
 
             // navigation side bar
             let navigation_pane = NodeRef::new(NodeData::new(
-                None, None, None, None, None, None, 
+                Some(500.0), None, Some(700.0), None, None, None, 
                 FlexDirection::Column, DebugColor::red()));
 
             // file list
             let file_list_view = NodeRef::new(NodeData::new(
-                None, None, None, None, None, None, 
-                FlexDirection::Column, DebugColor::yellow()));
+                None, None, None, None, Some(50.0), None, 
+                FlexDirection::Column, DebugColor::blue()));
     
     // drawing order
         explorer_wrapper.append(navigation_pane);
