@@ -21,6 +21,7 @@ pub struct Rect {
 impl Rect {
 
     /// Creates a new rectangle
+    #[inline]
     pub fn new(top: f32, bottom: f32, left: f32, right: f32, z: u32)
     -> Self
     {
@@ -29,6 +30,16 @@ impl Rect {
             y: [top, top, bottom, bottom],
             z_index: z,
         }
+    }
+
+    /// Creates a new rectangle with width / height instead of top / bottom
+    #[inline]
+    pub fn new_wh(offset_left: f32, offset_top: f32, width: f32, height: f32, z: u32)
+    -> Self
+    {
+        let right = offset_left + width;
+        let bottom = offset_top + height;
+        Self::new(offset_top, bottom, offset_left, right, z)
     }
 
     // rotates the rectangle around its center
@@ -68,6 +79,26 @@ impl Rect {
         simd_x_dir.store(&mut self.x, 0);
         simd_y_dir.store(&mut self.y, 0);
     }
+
+    // Convenience function for abstracting over the weird memory layout thing
+
+    /// Set width from top left corner
+    /// Warning: may not work well after rotations
+    #[inline]
+    pub fn set_width(&mut self, width: f32)
+    {
+        self.x[1] = self.x[0] + width;
+        self.x[3] = self.x[2] + width;
+    }
+
+    /// Set height from top left corner
+    /// Warning: may not work well after rotations
+    #[inline]
+    pub fn set_height(&mut self, height: f32)
+    {
+        self.y[2] = self.y[0] + height;
+        self.y[3] = self.y[1] + height;
+    }
 }
 
 impl ::std::convert::Into<Vec<Vertex>> for Rect {
@@ -101,7 +132,7 @@ fn bench_rotate_center(b: &mut test::Bencher) {
         rand_angles.push(rand::random::<f32>());
     }
 
-    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0);
+    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0);
 
     b.iter(|| { 
         for elem in rand_angles.iter() {
@@ -119,7 +150,7 @@ fn bench_translate(b: &mut test::Bencher) {
         rand_angles.push(rand::random::<f32>());
     }
 
-    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0);
+    let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0);
 
     b.iter(|| { 
         for elem in rand_angles.iter() {

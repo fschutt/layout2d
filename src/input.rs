@@ -95,6 +95,8 @@ impl MouseState {
 /// State, size, etc of the window, for comparing to the last frame
 #[derive(Debug)]
 pub struct WindowState {
+    keyboard_state: KeyboardState,
+    mouse_state: MouseState,
     pub width: u32,
     pub height: u32,
 }
@@ -105,6 +107,8 @@ impl WindowState {
         Self {
             width,
             height,
+            keyboard_state: KeyboardState::new(),
+            mouse_state: MouseState::new(10.0, 10.0),
         }
     }
 }
@@ -113,8 +117,6 @@ impl WindowState {
 #[inline]
 pub(crate) fn handle_event(event: &glium::glutin::Event,
                            window: &mut WindowState,
-                           keyboard: &mut KeyboardState, 
-                           mouse: &mut MouseState, 
                            ui_screen: &mut UiScreen) 
 -> bool
 {
@@ -122,17 +124,17 @@ pub(crate) fn handle_event(event: &glium::glutin::Event,
     use glium::glutin::Event::*;
     match *event {
         Closed                          => { return false; }
-        MouseMoved(x, y)                => { handle_mouse_move(mouse, x, y); },
-        MouseWheel(delta, phase)        => { handle_mouse_scroll(mouse, delta, phase); },
-        KeyboardInput(state, code, _)   => { handle_kb_input(keyboard, state, code); },
-        ReceivedCharacter(c)            => { handle_kb_char(keyboard, c); }
-        MouseInput(state, button)       => { handle_mouse_click(mouse, state, button); }
+        MouseMoved(x, y)                => { handle_mouse_move(&mut window.mouse_state, x, y); },
+        MouseWheel(delta, phase)        => { handle_mouse_scroll(&mut window.mouse_state, delta, phase); },
+        KeyboardInput(state, code, _)   => { handle_kb_input(&mut window.keyboard_state, state, code); },
+        ReceivedCharacter(c)            => { handle_kb_char(&mut window.keyboard_state, c); }
+        MouseInput(state, button)       => { handle_mouse_click(&mut window.mouse_state, state, button); }
         Resized(width, height)          => { handle_resize(window, width, height); }
         _ => {  },
     }
 
     // now that the state is updated, we have enough information to re-layout the frame
-    ui_screen.layout();
+    ui_screen.layout(window);
 
     true
 }

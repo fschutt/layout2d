@@ -81,7 +81,7 @@ impl Renderer {
         target.clear_color(1.0, 1.0, 1.0, 0.0);
 
         // get vertices, must be changed every draw call, sadly
-        let vertices = ui_screen.into_vertex_buffer(&self.display);
+        let vertices = ui_screen.into_vertex_buffer(&self.display, window_state);
 
         let current_shader = { if image.is_some() {
             self.shader_programs.get("image").unwrap()
