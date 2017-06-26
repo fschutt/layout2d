@@ -45,18 +45,17 @@ fn main() {
 
             // navigation side bar
             let navigation_pane = NodeRef::new(NodeData::new(
-                Some(500.0), None, Some(700.0), None, None, None, 
+                None, None, None, None, None, None, 
                 FlexDirection::Column, DebugColor::red()));
 
             // file list
             let file_list_view = NodeRef::new(NodeData::new(
-                None, None, None, None, Some(50.0), None, 
+                None, None, None, None, None, None, 
                 FlexDirection::Column, DebugColor::blue()));
-    
-    // drawing order
-        explorer_wrapper.append(navigation_pane);
-        explorer_wrapper.append(file_list_view);
+
     ui_screen.root.append(top_bar_wrapper);
+            explorer_wrapper.append(navigation_pane);
+            explorer_wrapper.append(file_list_view);
     ui_screen.root.append(explorer_wrapper);
 
 /*
