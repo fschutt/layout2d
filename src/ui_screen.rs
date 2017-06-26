@@ -101,8 +101,6 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     let mut width = *parent_width - *cur_offset_left;
     let mut height = *parent_height - *cur_offset_top;
 
-    println!("{:?}/{:?} initial height: {:?} width: {:?}", sibling_index, sibling_count, width, height);
-
     if let Some(parent) = current.parent() {
         if parent.borrow().flex_direction == FlexDirection::Row {
             width /= (sibling_count - sibling_index) as f32;
@@ -112,7 +110,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     }
 
     // correct width if there are hard constraints on max, min or exact width / height
-/*
+
     if let Some(w) = current.borrow().width { width = w; }
     if let Some(h) = current.borrow().height { height = h; }
 
@@ -141,7 +139,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
             height = min_height;
         }
     }
-*/
+
     // calculate space top + left
     let mut offset_top = cur_offset_top.clone();
     let mut offset_left = cur_offset_left.clone();
@@ -173,8 +171,6 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         }     
     }
 
-/*
-*/
     // println!("{:?} - {:?}", offset_top, offset_left);
 
     // z sorting is done by recursively dividing the range between max_z and 
@@ -184,7 +180,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
 
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
-    let cur_rect = Rect::new_wh(offset_left,offset_top, width as f32, height as f32, 
+    let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, 
                                 z_index_current_node, current.borrow().debug_color);
 
     // iterate children nodes

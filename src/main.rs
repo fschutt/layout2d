@@ -35,7 +35,7 @@ fn main() {
 
     // Top bar, 100 - 200 pixels tall, stretches full window
     let top_bar_wrapper = NodeRef::new(NodeData::new(
-            None, None, None, None, None, None, 
+            None, None, None, Some(64.0), None, None, 
             FlexDirection::Column, DebugColor::green()));
 
     // Main explorer view, stretches all sides
@@ -45,7 +45,7 @@ fn main() {
 
             // navigation side bar
             let navigation_pane = NodeRef::new(NodeData::new(
-                None, None, None, None, None, None, 
+                None, None, Some(200.0), None, None, None, 
                 FlexDirection::Column, DebugColor::red()));
 
             // file list
