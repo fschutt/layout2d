@@ -131,26 +131,31 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         }
     }
 */
+
+    println!("sibling {:?}/{:?}, width: {:?}, height: {:?}, remaining width: {:?}, remaining height: {:?}", sibling_index, sibling_count, width, height, *remaining_width, remaining_height);
+
     // calculate offset for top and left
     let (offset_top, offset_left)  = {
         if let Some(parent) = current.parent() {
             if parent.borrow().flex_direction == FlexDirection::Vertical {
-                (0.0, (parent_width / sibling_count as f32) * sibling_index as f32)
+                // (0.0, (parent_width / sibling_count as f32) * sibling_index as f32)
+                let offset_w = parent_width - *remaining_width;
+                *remaining_width -= width;
+                (0.0, offset_w)
             } else {
-                ((parent_height / sibling_count as f32) * sibling_index as f32, 0.0)
+                let offset_h = parent_height - *remaining_height;
+                *remaining_height -= height;
+                (offset_h, 0.0)
+                // ((parent_height / sibling_count as f32) * sibling_index as f32, 0.0)
             }
         } else { (0.0, 0.0) }
     };
 
-    println!("z-index: {:?}, offset_left = {:?} - {:?} = {:?}", cur_z, parent_width, *remaining_width, offset_left);
 
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
     let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, cur_z, current.borrow().debug_color);
     
-    *remaining_width -= offset_left;
-    *remaining_height -= offset_top;
-
     // iterate children nodes
     let sibling_count = current.children().count();
     let mut self_height = height.clone();
