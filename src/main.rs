@@ -33,17 +33,17 @@ fn main() {
 
         // Main explorer view, stretches all sides
         ui_screen.root.append(NodeRef::new(NodeData::new(
-            None, None, None, None, Some(300), Some(400), 
+            None, None, None, None, None, None, 
             FlexDirection::Vertical, DebugColor::blue() )));
-        
+
         // Top bar, 100 - 200 pixels tall, stretches full window
         ui_screen.root.append(NodeRef::new(NodeData::new(
-            None, Some(100), None, Some(200), Some(300), Some(400), 
+            None, None, None, None, None, None, 
             FlexDirection::Horizontal, DebugColor::green())));
 
         // Side bar, max 400 px wide 
         ui_screen.root.append(NodeRef::new(NodeData::new(
-            None, None, Some(400), None, Some(300), Some(400), 
+            None, None, None, None, None, None, 
             FlexDirection::Vertical, DebugColor::red())));
         
 

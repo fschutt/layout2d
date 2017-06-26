@@ -27,8 +27,8 @@ impl UiScreen {
     {
         Self { root: NodeRef::new(NodeData::new(
                     None, None, None, None, 
-                    Some(initial_width), 
-                    Some(initial_height), 
+                    Some(initial_width as f32), 
+                    Some(initial_height as f32), 
                     FlexDirection::Horizontal,
                     DebugColor::yellow() )) 
         }
@@ -39,8 +39,8 @@ impl UiScreen {
     pub(crate) fn layout(&mut self, window: &WindowState)
     -> bool 
     {
-        self.root.borrow_mut().width = Some(window.width);
-        self.root.borrow_mut().height = Some(window.height);
+        self.root.borrow_mut().width = Some(window.width as f32);
+        self.root.borrow_mut().height = Some(window.height as f32);
 
         // todo
         true
@@ -52,7 +52,12 @@ impl UiScreen {
     {
         // todo: use the &self to convert the final layout into rectangles
         // that are then submitted to the renderer
-        let display_list = ui_screen_to_dp_list(&self.root, 0.0, 1);
+        let mut max_width = self.root.borrow().width.unwrap().clone();
+        let mut max_height = self.root.borrow().width.unwrap().clone();
+        
+        let display_list = ui_screen_to_dp_list(&self.root, 0.0, 1, 0, 
+                           self.root.borrow().width.unwrap(), self.root.borrow().height.unwrap(),
+                           &mut max_width, &mut max_height);
 
         // let rect = Rect::new(200.0, 210.0, 400.0, 410.0, 0);
         let mut vertices: Vec<Vertex> = Vec::<Vertex>::new();
@@ -66,83 +71,98 @@ impl UiScreen {
 }
 
 /// Recursively traverse and convert the node data into a list of rectangles
-/// parent: the parent of the node
+/// current: the current node
 /// cur_z: The z-index, starts at 0 and increases. Is passed to OpenGL later
 /// sibling_count: How many siblings does this node have? (for flex distributing)
 /// sibling_count is 1 for root
 /// **WARNING**: The root node have a width and a height (usually the case when
 /// you create the UiScreen via `.new()`)
-fn ui_screen_to_dp_list(parent: &NodeRef<NodeData>,  
+fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,  
                         cur_z: f32,
-                        sibling_count: u32)
+                        sibling_count: u32,
+                        sibling_index: u32,
+                        parent_width: f32,
+                        parent_height: f32,
+                        remaining_width: &mut f32,
+                        remaining_height: &mut f32)
 -> Vec<Rect>
 {
-    // todo: remaining width
-
     let mut rectangles = Vec::<Rect>::new();
 
-    let mut width = 0_u32;
-    let mut height = 0_u32;
+    let (mut width, mut height) =  {
+        if let Some(parent) = current.parent() {
+            // initially, set the width + height to whatever the current node is
+            // plus take flex direction into account
+            let w;
+            let h;
 
-    // root must be initialized!
-    if cur_z == 0.0 { 
-        width = parent.borrow().width.unwrap();
-        height = parent.borrow().height.unwrap();
-    }
+            if parent.borrow().flex_direction == FlexDirection::Vertical { 
+                h = *remaining_height / sibling_count as f32;
+                w = *remaining_width;
+            } else { 
+                w = *remaining_width / sibling_count as f32;
+                h = *remaining_height;
 
-    if let Some(w) = parent.borrow().width { width = w; }
+            }
 
-    if let Some(h) = parent.borrow().height { height = h; }
+            (w, h)
 
-    // initially, set the width + height to whatever the parent is
-    // plus take flex direction into account
-    if parent.borrow().flex_direction == FlexDirection::Vertical { 
-        height /= sibling_count; } 
-    else { 
-        width /= sibling_count; 
-    }
+        } else {
+            // root node
+            (*remaining_width, *remaining_height)
+        }
+    };
 
-    let mut has_modified_width = false;
-    let mut has_modified_height = false;
+    if let Some(w) = current.borrow().width { width = w; }
+    if let Some(h) = current.borrow().height { height = h; }
 
     // if the width is greater than the maximal specified width, reduce
-    if let Some(max_width) = parent.borrow().max_width_rem {
+    if let Some(max_width) = current.borrow().max_width_rem {
         if width > max_width {
             width = max_width;
-            has_modified_width = true;
         }
     }
 
-    if let Some(max_height) = parent.borrow().max_height_rem {
+    if let Some(max_height) = current.borrow().max_height_rem {
         if height > max_height {
             height = max_height;
-            has_modified_height = true;
         }
     }
 
-    // if the width is smaller than the minimal width, overflow the parent
-    if let Some(min_width) = parent.borrow().min_width_rem {
-        width = min_width;
-        has_modified_width = true;
+    // if the width is smaller than the minimal width, overflow the current
+    if let Some(min_width) = current.borrow().min_width_rem {
+        if width < min_width {    
+            width = min_width;
+        }
     }
 
-    if let Some(min_height) = parent.borrow().min_height_rem {
-        height = min_height;
-        has_modified_height = true;
+    if let Some(min_height) = current.borrow().min_height_rem {
+        if height < min_height {   
+            height = min_height;
+        }
     }
+
+    let offset_top  = parent_height - *remaining_height;
+    let offset_left = parent_width - *remaining_width;
 
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
 
-    // offset_left: f32, offset_top: f32, width: f32, height: f32, z: u32
-    let cur_rect = Rect::new_wh(0.0, 0.0, width as f32, height as f32, cur_z, parent.borrow().debug_color);
-    rectangles.push(cur_rect);
+    let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, cur_z, current.borrow().debug_color);
     
-    let sibling_count = parent.children().count();
-    for (index, node) in parent.children().enumerate() {
+    *remaining_width -= offset_left;
+    *remaining_height -= offset_top;
+
+    // iterate children nodes
+    let sibling_count = current.children().count();
+
+    for (index, node) in current.children().enumerate() {
         let advance_z = cur_z + (1.0 / sibling_count as f32 * index as f32);
-        rectangles.append(&mut ui_screen_to_dp_list(&node, advance_z, sibling_count as u32)); 
+        rectangles.append(&mut ui_screen_to_dp_list(&node, advance_z, sibling_count as u32, index as u32, 
+                          width, height, remaining_width, remaining_height)); 
     }
+
+    rectangles.push(cur_rect);
 
     return rectangles;
 }
