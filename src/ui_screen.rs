@@ -52,12 +52,15 @@ impl UiScreen {
     {
         // todo: use the &self to convert the final layout into rectangles
         // that are then submitted to the renderer
+
         let mut max_width = self.root.borrow().width.unwrap().clone();
         let mut max_height = self.root.borrow().height.unwrap().clone();
+        let parent_width = self.root.borrow().width.unwrap();
+        let parent_height = self.root.borrow().height.unwrap();
 
         let display_list = ui_screen_to_dp_list(&self.root, 0.0, 1, 0, 
-                           self.root.borrow().width.unwrap(), self.root.borrow().height.unwrap(),
-                           &mut max_width, &mut max_height);
+                                &parent_width, &parent_height,
+                                &mut max_width, &mut max_height);
 
         // let rect = Rect::new(200.0, 210.0, 400.0, 410.0, 0);
         let mut vertices: Vec<Vertex> = Vec::<Vertex>::new();
@@ -78,11 +81,11 @@ impl UiScreen {
 /// **WARNING**: The root node have a width and a height (usually the case when
 /// you create the UiScreen via `.new()`)
 fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,  
-                        mut cur_z: f32,
+                        cur_z: f32,
                         sibling_count: u32,
                         sibling_index: u32,
-                        parent_width: f32,
-                        parent_height: f32,
+                        parent_width: &f32,
+                        parent_height: &f32,
                         remaining_width: &mut f32,
                         remaining_height: &mut f32)
 -> Vec<Rect>
@@ -92,19 +95,21 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     let (mut width, mut height) =  {
         if let Some(parent) = current.parent() {
             if parent.borrow().flex_direction == FlexDirection::Vertical { 
-                (*remaining_width / sibling_count as f32, *remaining_height)
+                (*parent_width / sibling_count as f32, *parent_height)
             } else { 
-                (*remaining_width, *remaining_height / sibling_count as f32)
+                (*parent_width, *parent_height / sibling_count as f32)
             }
         } else {
             // root node
-            (*remaining_width, *remaining_height)
+            (*parent_width, *parent_height)
         }
     };
 
-/*
+    // correct width if there are hard constraints on max, min or exact width / height
+
     if let Some(w) = current.borrow().width { width = w; }
     if let Some(h) = current.borrow().height { height = h; }
+
     // if the width is greater than the maximal specified width, reduce
     if let Some(max_width) = current.borrow().max_width_rem {
         if width > max_width {
@@ -130,9 +135,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
             height = min_height;
         }
     }
-*/
 
-    println!("sibling {:?}/{:?}, width: {:?}, height: {:?}, remaining width: {:?}, remaining height: {:?}", sibling_index, sibling_count, width, height, *remaining_width, remaining_height);
 
     // calculate offset for top and left
     let (offset_top, offset_left)  = {
@@ -155,17 +158,22 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
     let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, cur_z, current.borrow().debug_color);
-    
+    println!("sibling {:?}/{:?}, width: {:?}, height: {:?}, remaining width: {:?}, remaining height: {:?}", sibling_index, sibling_count, width, height, *remaining_width, remaining_height);
+
     // iterate children nodes
     let sibling_count = current.children().count();
-    let mut self_height = height.clone();
-    let mut self_width = width.clone();
+
+    let self_width = width.clone();
+    let self_height = height.clone();
+    let mut max_width = width.clone();
+    let mut max_height = height.clone();
+
     let mut advance_z = cur_z;
 
     for (index, node) in current.children().enumerate() {
         advance_z += (1.0 / sibling_count as f32) * index as f32;
         rectangles.append(&mut ui_screen_to_dp_list(&node, advance_z, sibling_count as u32, index as u32, 
-                          width, height, &mut self_width, &mut self_height)); 
+                          &self_width, &self_height, &mut max_width, &mut max_height)); 
     }
 
     rectangles.push(cur_rect);
