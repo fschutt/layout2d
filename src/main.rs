@@ -38,9 +38,16 @@ fn main() {
             None, None, None, None, None, Some(100.0), 
             FlexDirection::Column, DebugColor::green()));
 
-    let top_bar_wrapper_2 = NodeRef::new(NodeData::new(
-            None, None, None, None, None, Some(100.0), 
-            FlexDirection::Column, DebugColor::red()));
+        let top_bar_file = NodeRef::new(NodeData::new(
+                None, None, None, None, None, Some(24.0), 
+                FlexDirection::Column, DebugColor::blue()));
+        top_bar_wrapper.append(top_bar_file);
+
+        let top_bar_ribbon = NodeRef::new(NodeData::new(
+                None, None, None, None, None, Some(76.0), 
+                FlexDirection::Column, DebugColor::yellow()));
+        top_bar_wrapper.append(top_bar_ribbon);
+    ui_screen.root.append(top_bar_wrapper);
 
     // Main explorer view, stretches all sides
     let explorer_wrapper = NodeRef::new(NodeData::new(
@@ -51,15 +58,12 @@ fn main() {
             let navigation_pane = NodeRef::new(NodeData::new(
                 None, None, Some(200.0), None, None, None, 
                 FlexDirection::Column, DebugColor::red()));
+            explorer_wrapper.append(navigation_pane);
 
             // file list
             let file_list_view = NodeRef::new(NodeData::new(
                 None, None, None, None, None, None, 
                 FlexDirection::Column, DebugColor::blue()));
-
-    ui_screen.root.append(top_bar_wrapper);
-    ui_screen.root.append(top_bar_wrapper_2);
-            explorer_wrapper.append(navigation_pane);
             explorer_wrapper.append(file_list_view);
     ui_screen.root.append(explorer_wrapper);
 
