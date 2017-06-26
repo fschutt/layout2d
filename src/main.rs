@@ -34,17 +34,17 @@ fn main() {
         // Main explorer view, stretches all sides
         ui_screen.root.append(NodeRef::new(NodeData::new(
             None, None, None, None, None, None, 
-            FlexDirection::Vertical, DebugColor::blue() )));
+            FlexDirection::Row, DebugColor::blue() )));
 
         // Top bar, 100 - 200 pixels tall, stretches full window
         ui_screen.root.append(NodeRef::new(NodeData::new(
             None, None, None, None, None, None, 
-            FlexDirection::Horizontal, DebugColor::green())));
+            FlexDirection::Row, DebugColor::green())));
 
         // Side bar, max 400 px wide 
         ui_screen.root.append(NodeRef::new(NodeData::new(
             None, None, None, None, None, None, 
-            FlexDirection::Vertical, DebugColor::red())));
+            FlexDirection::Row, DebugColor::red())));
         
 
         // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);

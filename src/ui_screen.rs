@@ -29,7 +29,7 @@ impl UiScreen {
                     None, None, None, None, 
                     Some(initial_width as f32), 
                     Some(initial_height as f32), 
-                    FlexDirection::Horizontal,
+                    FlexDirection::Column,
                     DebugColor::yellow() )) 
         }
     }
@@ -94,7 +94,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
 
     let (mut width, mut height) =  {
         if let Some(parent) = current.parent() {
-            if parent.borrow().flex_direction == FlexDirection::Vertical { 
+            if parent.borrow().flex_direction == FlexDirection::Row { 
                 (*parent_width / sibling_count as f32, *parent_height)
             } else { 
                 (*parent_width, *parent_height / sibling_count as f32)
@@ -140,7 +140,7 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     // calculate offset for top and left
     let (offset_top, offset_left)  = {
         if let Some(parent) = current.parent() {
-            if parent.borrow().flex_direction == FlexDirection::Vertical {
+            if parent.borrow().flex_direction == FlexDirection::Row {
                 // (0.0, (parent_width / sibling_count as f32) * sibling_index as f32)
                 let offset_w = parent_width - *remaining_width;
                 *remaining_width -= width;

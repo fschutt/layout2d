@@ -3,8 +3,8 @@ use debug::DebugColor;
 /// Which way the rectangles should flex
 #[derive(Debug, PartialEq)]
 pub enum FlexDirection {
-    Horizontal,
-    Vertical,
+    Column,
+    Row,
 }
 
 #[derive(Debug)]
