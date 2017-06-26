@@ -62,8 +62,8 @@ impl UiScreen {
     {
         let mut cur_offset_width = 0.0;
         let mut cur_offset_height = 0.0;
-        let parent_width = self.root.borrow().width.unwrap();
-        let parent_height = self.root.borrow().height.unwrap();
+        let parent_width = self.root.borrow().width.unwrap().clone();
+        let parent_height = self.root.borrow().height.unwrap().clone();
 
         let min_z_index = 0.0;
         let max_z_index = 1.0;
@@ -72,7 +72,7 @@ impl UiScreen {
 
         ui_screen_to_dp_list(&self.root, min_z_index, max_z_index, 
                              root_level_children, root_sibling_count, 
-                             &parent_width, &parent_height,
+                             parent_width, parent_height, 0.0, 0.0,
                              &mut cur_offset_width, &mut cur_offset_height)
     }
 
@@ -90,16 +90,18 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
                         max_z: f32,
                         sibling_count: u32,
                         sibling_index: u32,
-                        parent_width: &f32,
-                        parent_height: &f32,
+                        parent_width: f32,
+                        parent_height: f32,
+                        parent_offset_left: f32,
+                        parent_offset_top: f32,
                         cur_offset_left: &mut f32,
                         cur_offset_top: &mut f32)
 -> Vec<Rect>
 {
     let mut rectangles = Vec::<Rect>::new();
 
-    let mut width = *parent_width - *cur_offset_left;
-    let mut height = *parent_height - *cur_offset_top;
+    let mut width = parent_width; /* ; */
+    let mut height = parent_height; /*   */
 
     if let Some(parent) = current.parent() {
         if parent.borrow().flex_direction == FlexDirection::Row {
@@ -109,8 +111,10 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
         }
     }
 
-    // correct width if there are hard constraints on max, min or exact width / height
+    width -= *cur_offset_left;
+    height -= *cur_offset_top;
 
+    // correct width if there are hard constraints on max, min or exact width / height
     if let Some(w) = current.borrow().width { width = w; }
     if let Some(h) = current.borrow().height { height = h; }
 
@@ -141,8 +145,8 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     }
 
     // calculate space top + left
-    let mut offset_top = cur_offset_top.clone();
-    let mut offset_left = cur_offset_left.clone();
+    let mut offset_top = cur_offset_top.clone() + parent_offset_top;
+    let mut offset_left = cur_offset_left.clone() + parent_offset_left;
 
 /*
     if let Some(parent) = current.parent() {
@@ -192,12 +196,15 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
 
     let mut new_offset_left = offset_left.clone();
     let mut new_offset_top = offset_top.clone();
+    let mut offset_top_zeroed = 0.0;
+    let mut offset_left_zeroed = 0.0;
     
     for (index, node) in current.children().enumerate() {
         rectangles.append(&mut ui_screen_to_dp_list(&node, z_index_current_node, new_max_z, 
                                                      children_count as u32, index as u32,
-                                                     &self_width, &self_height,
-                                                     &mut new_offset_left, &mut new_offset_top)); 
+                                                     self_width, self_height,
+                                                     new_offset_left, new_offset_top,
+                                                     &mut offset_left_zeroed, &mut offset_top_zeroed)); 
     }
 
     rectangles.push(cur_rect);

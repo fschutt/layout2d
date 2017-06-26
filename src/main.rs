@@ -35,8 +35,12 @@ fn main() {
 
     // Top bar, 100 - 200 pixels tall, stretches full window
     let top_bar_wrapper = NodeRef::new(NodeData::new(
-            None, None, None, Some(64.0), None, None, 
+            None, None, None, None, None, Some(100.0), 
             FlexDirection::Column, DebugColor::green()));
+
+    let top_bar_wrapper_2 = NodeRef::new(NodeData::new(
+            None, None, None, None, None, Some(100.0), 
+            FlexDirection::Column, DebugColor::red()));
 
     // Main explorer view, stretches all sides
     let explorer_wrapper = NodeRef::new(NodeData::new(
@@ -54,15 +58,10 @@ fn main() {
                 FlexDirection::Column, DebugColor::blue()));
 
     ui_screen.root.append(top_bar_wrapper);
+    ui_screen.root.append(top_bar_wrapper_2);
             explorer_wrapper.append(navigation_pane);
             explorer_wrapper.append(file_list_view);
     ui_screen.root.append(explorer_wrapper);
-
-/*
-    for desc in ui_screen.root.descendants() {
-        println!("desc - {:?}", desc);
-    }
-*/
 
     // ------------------ end constructing UI screen
 
