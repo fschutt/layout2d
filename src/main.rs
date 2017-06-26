@@ -15,7 +15,7 @@ pub mod rect;
 mod debug;
 
 use rctree::NodeRef;
-use node_data::NodeData;
+use node_data::{NodeData, FlexDirection};
 use debug::DebugColor;
 use renderer::Renderer;
 
@@ -30,12 +30,22 @@ fn main() {
 
     // Construct the explorer UI
     let mut ui_screen = ui_screen::UiScreen::new(INITIAL_WIDTH, INITIAL_HEIGHT);
-        // Top bar, 100 - 200 pixels tall, stretches full window
-        ui_screen.root.append(NodeRef::new(NodeData::new(None, Some(100), None, Some(200), Some(300), Some(400), DebugColor::green())));
-        // Side bar, max 400 px wide 
-        ui_screen.root.append(NodeRef::new(NodeData::new(None, None, Some(400), None, Some(300), Some(400), DebugColor::red())));
+
         // Main explorer view, stretches all sides
-        ui_screen.root.append(NodeRef::new(NodeData::new(None, None, None, None, Some(300), Some(400), DebugColor::blue() )));
+        ui_screen.root.append(NodeRef::new(NodeData::new(
+            None, None, None, None, Some(300), Some(400), 
+            FlexDirection::Vertical, DebugColor::blue() )));
+        
+        // Top bar, 100 - 200 pixels tall, stretches full window
+        ui_screen.root.append(NodeRef::new(NodeData::new(
+            None, Some(100), None, Some(200), Some(300), Some(400), 
+            FlexDirection::Horizontal, DebugColor::green())));
+
+        // Side bar, max 400 px wide 
+        ui_screen.root.append(NodeRef::new(NodeData::new(
+            None, None, Some(400), None, Some(300), Some(400), 
+            FlexDirection::Vertical, DebugColor::red())));
+        
 
         // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);
         // let texture_angle = renderer.load_image_png(include_bytes!("assets/widget_tree_view_arrow.svg.png"));

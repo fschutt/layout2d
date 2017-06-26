@@ -10,9 +10,10 @@ use std::collections::HashMap;
 pub struct Vertex {
     pub position: [f32; 3],
     pub tex_coords: [f32; 2],
+    pub debug_color: [f32; 4],
 }
 
-implement_vertex!(Vertex, position, tex_coords);
+implement_vertex!(Vertex, position, tex_coords, debug_color);
 
 // shaders to be compiled at renderer startup
 const VERTEX_SHADER_SRC_BASIC: &'static str = include_str!("shaders/vertex_basic.glsl");
@@ -81,7 +82,7 @@ impl Renderer {
         target.clear_color(1.0, 1.0, 1.0, 0.0);
 
         // get vertices, must be changed every draw call, sadly
-        let vertices = ui_screen.into_vertex_buffer(&self.display, window_state);
+        let vertices = ui_screen.into_vertex_buffer(&self.display);
 
         let current_shader = { if image.is_some() {
             self.shader_programs.get("image").unwrap()
@@ -115,6 +116,7 @@ impl Renderer {
            // draw normal
            target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_normal, &DrawParameters {
                smooth: Some(glium::draw_parameters::Smooth::Nicest),
+               /* polygon_mode: glium::draw_parameters::PolygonMode::Line, */
                .. Default::default()
            }).unwrap(); 
         }

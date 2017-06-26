@@ -1,7 +1,7 @@
 //! All debug structs and functions go in here
 
 /// Color for debugging
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct DebugColor {
     pub r: u8,
     pub g: u8,

@@ -1,5 +1,12 @@
 use debug::DebugColor;
 
+/// Which way the rectangles should flex
+#[derive(Debug, PartialEq)]
+pub enum FlexDirection {
+    Horizontal,
+    Vertical,
+}
+
 #[derive(Debug)]
 pub struct NodeData {
     pub min_width_rem: Option<u32>,
@@ -13,7 +20,8 @@ pub struct NodeData {
     /// Width of the node. 
     /// **WARNING**: Must be initialized for the root node
     pub height: Option<u32>,
-
+    /// What direction the children should flex to
+    pub flex_direction: FlexDirection,
     /// **DEBUG** color of the node
     pub debug_color: DebugColor,
 }
@@ -26,6 +34,7 @@ impl NodeData {
                max_height_rem: Option<u32>,
                width: Option<u32>,
                height: Option<u32>,
+               flex_direction: FlexDirection,
                debug_color: DebugColor)
     -> Self {
         Self {
@@ -35,6 +44,7 @@ impl NodeData {
             max_height_rem,
             width,
             height,
+            flex_direction,
             debug_color,
         }
     }
