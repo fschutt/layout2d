@@ -41,6 +41,7 @@ impl Renderer {
             .with_dimensions(width, height)
             .with_title("File Explorer")
             .with_multisampling(4)
+            .with_depth_buffer(24)
             .build_glium()
             .unwrap();
 
@@ -79,7 +80,7 @@ impl Renderer {
         use glium::draw_parameters::DrawParameters;
 
         let mut target = self.display.draw();
-        target.clear_color(1.0, 1.0, 1.0, 0.0);
+        target.clear_color_and_depth((1.0, 1.0, 1.0, 1.0), 1.0);
 
         // get vertices, must be changed every draw call, sadly
         let vertices = ui_screen.into_vertex_buffer(&self.display);
@@ -105,20 +106,25 @@ impl Renderer {
                 transparency: 0.6_f32))
         } else { None }};
 
+        let draw_parameters = DrawParameters {
+                smooth: Some(glium::draw_parameters::Smooth::Nicest),
+                /* polygon_mode: glium::PolygonMode::Line, */
+                depth: glium::Depth {
+                    test: glium::draw_parameters::DepthTest::IfLess,
+                    write: true,
+                    .. Default::default()
+                },
+                .. Default::default()};
+
+        let mut draw_parameters_image = draw_parameters.clone();
+        draw_parameters_image.blend = glium::draw_parameters::Blend::alpha_blending();
+
         if let Some(uniforms_image) = uniforms_image {
             // draw with image
-            target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_image, &DrawParameters {
-                smooth: Some(glium::draw_parameters::Smooth::Nicest),
-                blend: glium::draw_parameters::Blend::alpha_blending(),
-                .. Default::default()
-            }).unwrap();
+            target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_image, &draw_parameters_image).unwrap();
         } else {
            // draw normal
-           target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_normal, &DrawParameters {
-               smooth: Some(glium::draw_parameters::Smooth::Nicest),
-               polygon_mode: glium::draw_parameters::PolygonMode::Line,
-               .. Default::default()
-           }).unwrap(); 
+           target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_normal, &draw_parameters).unwrap(); 
         }
 
         target.finish().unwrap();

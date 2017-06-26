@@ -18,6 +18,7 @@ use rctree::NodeRef;
 use node_data::{NodeData, FlexDirection};
 use debug::DebugColor;
 use renderer::Renderer;
+use ui_screen::UiScreen;
 
 const INITIAL_HEIGHT: u32 = 600;
 const INITIAL_WIDTH: u32 = 800;
@@ -29,31 +30,44 @@ fn main() {
     let renderer = Renderer::new(INITIAL_WIDTH, INITIAL_HEIGHT);
 
     // Construct the explorer UI
-    let mut ui_screen = ui_screen::UiScreen::new(INITIAL_WIDTH, INITIAL_HEIGHT);
+    let mut ui_screen = UiScreen::new(INITIAL_WIDTH, INITIAL_HEIGHT)
+                            .with_root_as_column();
 
-        // Main explorer view, stretches all sides
-        ui_screen.root.append(NodeRef::new(NodeData::new(
+    // Top bar, 100 - 200 pixels tall, stretches full window
+    let top_bar_wrapper = NodeRef::new(NodeData::new(
             None, None, None, None, None, None, 
-            FlexDirection::Column, DebugColor::blue() )));
+            FlexDirection::Column, DebugColor::green()));
 
-        // Top bar, 100 - 200 pixels tall, stretches full window
-        ui_screen.root.append(NodeRef::new(NodeData::new(
-            None, None, None, None, None, None, 
-            FlexDirection::Column, DebugColor::green())));
+    // Main explorer view, stretches all sides
+    let explorer_wrapper = NodeRef::new(NodeData::new(
+        None, None, None, None, None, None, 
+        FlexDirection::Row, DebugColor::blue()));
 
-        // Side bar, max 400 px wide 
-        ui_screen.root.append(NodeRef::new(NodeData::new(
-            None, None, None, None, None, None, 
-            FlexDirection::Column, DebugColor::red())));
-        
+            // navigation side bar
+            let navigation_pane = NodeRef::new(NodeData::new(
+                None, None, None, None, None, None, 
+                FlexDirection::Column, DebugColor::green()));
 
-        // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);
-        // let texture_angle = renderer.load_image_png(include_bytes!("assets/widget_tree_view_arrow.svg.png"));
+            // file list
+            let file_list_view = NodeRef::new(NodeData::new(
+                None, None, None, None, None, None, 
+                FlexDirection::Column, DebugColor::yellow()));
+    
+    // drawing order
+    ui_screen.root.append(top_bar_wrapper.clone());
+    ui_screen.root.append(explorer_wrapper.clone());
+        explorer_wrapper.append(navigation_pane.clone());
+        explorer_wrapper.append(file_list_view.clone());
 
-        /// when adding animations, change this to poll events
-        for event in renderer.display.wait_events() {
-            input::handle_event(&event, &mut window_state, &mut ui_screen);
-            // renderer.render(&window_state, &ui_screen, Some(&texture_angle));
-            renderer.render(&window_state, &ui_screen, None);
-        }
+    // ------------------ end constructing UI screen
+
+    // renderer.display.get_window().unwrap().set_cursor(glium::glutin::MouseCursor::Wait);
+    // let texture_angle = renderer.load_image_png(include_bytes!("assets/widget_tree_view_arrow.svg.png"));
+
+    /// when adding animations, change this to poll events
+    for event in renderer.display.wait_events() {
+        input::handle_event(&event, &mut window_state, &mut ui_screen);
+        // renderer.render(&window_state, &ui_screen, Some(&texture_angle));
+        renderer.render(&window_state, &ui_screen, None);
+    }
 }
