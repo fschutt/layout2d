@@ -116,7 +116,7 @@ impl Renderer {
            // draw normal
            target.draw(&vertices, &INDEX_BUFFER, &current_shader, &uniforms_normal, &DrawParameters {
                smooth: Some(glium::draw_parameters::Smooth::Nicest),
-               /* polygon_mode: glium::draw_parameters::PolygonMode::Line, */
+               polygon_mode: glium::draw_parameters::PolygonMode::Line,
                .. Default::default()
            }).unwrap(); 
         }

@@ -53,8 +53,8 @@ impl UiScreen {
         // todo: use the &self to convert the final layout into rectangles
         // that are then submitted to the renderer
         let mut max_width = self.root.borrow().width.unwrap().clone();
-        let mut max_height = self.root.borrow().width.unwrap().clone();
-        
+        let mut max_height = self.root.borrow().height.unwrap().clone();
+
         let display_list = ui_screen_to_dp_list(&self.root, 0.0, 1, 0, 
                            self.root.borrow().width.unwrap(), self.root.borrow().height.unwrap(),
                            &mut max_width, &mut max_height);
@@ -78,7 +78,7 @@ impl UiScreen {
 /// **WARNING**: The root node have a width and a height (usually the case when
 /// you create the UiScreen via `.new()`)
 fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,  
-                        cur_z: f32,
+                        mut cur_z: f32,
                         sibling_count: u32,
                         sibling_index: u32,
                         parent_width: f32,
@@ -91,31 +91,20 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
 
     let (mut width, mut height) =  {
         if let Some(parent) = current.parent() {
-            // initially, set the width + height to whatever the current node is
-            // plus take flex direction into account
-            let w;
-            let h;
-
             if parent.borrow().flex_direction == FlexDirection::Vertical { 
-                h = *remaining_height / sibling_count as f32;
-                w = *remaining_width;
+                (*remaining_width / sibling_count as f32, *remaining_height)
             } else { 
-                w = *remaining_width / sibling_count as f32;
-                h = *remaining_height;
-
+                (*remaining_width, *remaining_height / sibling_count as f32)
             }
-
-            (w, h)
-
         } else {
             // root node
             (*remaining_width, *remaining_height)
         }
     };
 
+/*
     if let Some(w) = current.borrow().width { width = w; }
     if let Some(h) = current.borrow().height { height = h; }
-
     // if the width is greater than the maximal specified width, reduce
     if let Some(max_width) = current.borrow().max_width_rem {
         if width > max_width {
@@ -141,13 +130,22 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
             height = min_height;
         }
     }
+*/
+    // calculate offset for top and left
+    let (offset_top, offset_left)  = {
+        if let Some(parent) = current.parent() {
+            if parent.borrow().flex_direction == FlexDirection::Vertical {
+                (0.0, (parent_width / sibling_count as f32) * sibling_index as f32)
+            } else {
+                ((parent_height / sibling_count as f32) * sibling_index as f32, 0.0)
+            }
+        } else { (0.0, 0.0) }
+    };
 
-    let offset_top  = parent_height - *remaining_height;
-    let offset_left = parent_width - *remaining_width;
+    println!("z-index: {:?}, offset_left = {:?} - {:?} = {:?}", cur_z, parent_width, *remaining_width, offset_left);
 
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
-
     let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, cur_z, current.borrow().debug_color);
     
     *remaining_width -= offset_left;
@@ -155,11 +153,14 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
 
     // iterate children nodes
     let sibling_count = current.children().count();
+    let mut self_height = height.clone();
+    let mut self_width = width.clone();
+    let mut advance_z = cur_z;
 
     for (index, node) in current.children().enumerate() {
-        let advance_z = cur_z + (1.0 / sibling_count as f32 * index as f32);
+        advance_z += (1.0 / sibling_count as f32) * index as f32;
         rectangles.append(&mut ui_screen_to_dp_list(&node, advance_z, sibling_count as u32, index as u32, 
-                          width, height, remaining_width, remaining_height)); 
+                          width, height, &mut self_width, &mut self_height)); 
     }
 
     rectangles.push(cur_rect);
