@@ -194,8 +194,8 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     let self_height = height.clone();
     let new_max_z = z_index_current_node + cur_z_stepping;
 
-    let mut new_offset_left = offset_left.clone();
-    let mut new_offset_top = offset_top.clone();
+    let new_offset_left = offset_left.clone();
+    let new_offset_top = offset_top.clone();
     let mut offset_top_zeroed = 0.0;
     let mut offset_left_zeroed = 0.0;
     
