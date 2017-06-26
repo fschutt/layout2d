@@ -29,7 +29,7 @@ impl UiScreen {
                     None, None, None, None, 
                     Some(initial_width as f32), 
                     Some(initial_height as f32), 
-                    FlexDirection::Column,
+                    FlexDirection::Row,
                     DebugColor::yellow() )) 
         }
     }
@@ -140,7 +140,6 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     let (offset_top, offset_left)  = {
         if let Some(parent) = current.parent() {
             if parent.borrow().flex_direction == FlexDirection::Row {
-                // (0.0, (parent_width / sibling_count as f32) * sibling_index as f32)
                 let offset_w = parent_width - *remaining_width;
                 *remaining_width -= width;
                 (0.0, offset_w)
@@ -148,7 +147,6 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
                 let offset_h = parent_height - *remaining_height;
                 *remaining_height -= height;
                 (offset_h, 0.0)
-                // ((parent_height / sibling_count as f32) * sibling_index as f32, 0.0)
             }
         } else { (0.0, 0.0) }
     };
