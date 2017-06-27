@@ -145,8 +145,8 @@ fn ui_screen_to_dp_list(current: &NodeRef<NodeData>,
     }
 
     // calculate space top + left
-    let mut offset_top = cur_offset_top.clone() + parent_offset_top;
-    let mut offset_left = cur_offset_left.clone() + parent_offset_left;
+    let offset_top = cur_offset_top.clone() + parent_offset_top;
+    let offset_left = cur_offset_left.clone() + parent_offset_left;
 
 /*
     if let Some(parent) = current.parent() {
