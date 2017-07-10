@@ -13,4 +13,3 @@ image = "0.14.0"
 
 [profile.release]
 lto = true
-panic = 'abort'
