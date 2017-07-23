@@ -1,49 +1,45 @@
 extern crate simd;
-extern crate test;
-extern crate rand;
-extern crate glium;
 
-use renderer::Vertex;
-use debug::DebugColor;
+use node_data::NodeData;
 
 /// A finite rectangle in pixel coordinates that will end up on the screen
 #[derive(Debug)]
-pub struct Rect {
-    /// Z-index is an int in order to achieve z-order sortability
-    z: f32,
+pub struct Rect<T: Copy + Clone> {
     /// x coordinates - as an array because of simd layout
     /// tl, tr, bl, br 
     x: [f32; 4],
     /// y coordinates - as an array because of simd layout
     /// top left, top right, bottom left, bottom right 
     y: [f32; 4],
-    /// debugging color, may be used in final renderer, don't know
-    color: DebugColor,
+    /// Z-index is an int in order to achieve z-order sortability
+    z: f32,
+    /// Internal data of the rectangle
+    pub(crate) data: NodeData<T>,
 }
 
-impl Rect {
+impl<T: Copy + Clone> Rect<T> {
 
     /// Creates a new rectangle
     #[inline]
-    pub fn new(top: f32, bottom: f32, left: f32, right: f32, z: f32, color: DebugColor)
+    pub fn new(top: f32, bottom: f32, left: f32, right: f32, z: f32, data: NodeData<T>)
     -> Self
     {
         Self {
             x: [left, right, left, right],
             y: [top, top, bottom, bottom],
             z: z,
-            color: color,
+            data: data,
         }
     }
 
     /// Creates a new rectangle with width / height instead of top / bottom
     #[inline]
-    pub fn new_wh(offset_left: f32, offset_top: f32, width: f32, height: f32, z: f32, color: DebugColor)
+    pub fn new_wh(offset_left: f32, offset_top: f32, width: f32, height: f32, z: f32, data: NodeData<T>)
     -> Self
     {
         let right = offset_left + width;
         let bottom = offset_top + height;
-        Self::new(offset_top, bottom, offset_left, right, z, color)
+        Self::new(offset_top, bottom, offset_left, right, z, data)
     }
 
     // rotates the rectangle around its center
@@ -102,50 +98,6 @@ impl Rect {
     {
         self.y[2] = self.y[0] + height;
         self.y[3] = self.y[1] + height;
-    }
-}
-
-impl ::std::convert::Into<Vec<Vertex>> for Rect {
-    fn into(self)
-    -> Vec<Vertex>
-    {
-        return vec![
-            Vertex { position:    [self.x[0],    self.y[0], self.z],
-                     tex_coords:  [0.0, 1.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*top left*/
-            Vertex { position: [self.x[2],    self.y[2], self.z],
-                     tex_coords: [0.0, 0.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*bottom left*/
-            Vertex { position: [self.x[1],    self.y[1], self.z],
-                     tex_coords: [1.0, 1.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*top right*/
-            
-            Vertex { position: [self.x[3],    self.y[3], self.z],
-                     tex_coords: [1.0, 0.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*bottom right*/
-            Vertex { position: [self.x[1],    self.y[1], self.z],
-                     tex_coords: [1.0, 1.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*top right*/
-            Vertex { position: [self.x[2],    self.y[2], self.z],
-                     tex_coords: [0.0, 0.0],
-                     debug_color: [self.color.r as f32, self.color.g as f32, self.color.b as f32, self.color.a as f32] }, /*bottom left*/
-        ];
-    }
-}
-
-pub trait IntoVertexBuffer {
-    fn into_vertices(self, display: &glium::Display) -> glium::VertexBuffer<Vertex>;
-}
-
-impl IntoVertexBuffer for Vec<Rect> {
-    fn into_vertices(self, display: &glium::Display) -> glium::VertexBuffer<Vertex> 
-    {
-        let mut vertices: Vec<Vertex> = Vec::<Vertex>::new();
-        for rect in self {
-            vertices.append(&mut rect.into());
-        }
-
-        glium::VertexBuffer::new(display, &vertices).unwrap()
     }
 }
 

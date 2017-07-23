@@ -1,51 +1,50 @@
-use debug::DebugColor;
-
 /// Which way the rectangles should flex
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FlexDirection {
     Column,
     Row,
 }
 
-#[derive(Debug)]
-pub struct NodeData {
-    pub min_width_rem: Option<f32>,
-    pub min_height_rem: Option<f32>,
-    pub max_width_rem: Option<f32>,
-    pub max_height_rem: Option<f32>,
-
-    /// Width of the node. 
-    /// **WARNING**: Must be initialized for the root node
+#[derive(Debug, Copy, Clone)]
+pub struct NodeData<T: Copy + Clone> {
+    /// Minimum width of this node
+    pub min_width: Option<f32>,
+    /// Minimum height of this node
+    pub min_height: Option<f32>,
+    /// Maximum width of this node
+    pub max_width: Option<f32>,
+    /// Maximum height of this node
+    pub max_height: Option<f32>,
+    /// Width of the node (must be initialized for the root node)
     pub width: Option<f32>,
-    /// Width of the node. 
-    /// **WARNING**: Must be initialized for the root node
+    /// Width of the node. (must be initialized for the root node)
     pub height: Option<f32>,
     /// What direction the children should flex to
     pub flex_direction: FlexDirection,
-    /// **DEBUG** color of the node
-    pub debug_color: DebugColor,
+    /// Abstract data of the node, defined by the renderer / application (not inside this library)
+    pub data: T,
 }
 
-impl NodeData {
+impl<T: Copy + Clone> NodeData<T> {
     /// Creates a new node
-    pub fn new(min_width_rem: Option<f32>, 
-               min_height_rem: Option<f32>, 
-               max_width_rem: Option<f32>, 
-               max_height_rem: Option<f32>,
+    pub fn new(min_width: Option<f32>, 
+               min_height: Option<f32>, 
+               max_width: Option<f32>, 
+               max_height: Option<f32>,
                width: Option<f32>,
                height: Option<f32>,
                flex_direction: FlexDirection,
-               debug_color: DebugColor)
+               data: T)
     -> Self {
         Self {
-            min_width_rem,
-            min_height_rem,
-            max_width_rem,
-            max_height_rem,
+            min_width,
+            min_height,
+            max_width,
+            max_height,
             width,
             height,
             flex_direction,
-            debug_color,
+            data,
         }
     }
 }
