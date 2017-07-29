@@ -7,14 +7,14 @@ use node_data::NodeData;
 pub struct Rect<T: Copy + Clone> {
     /// x coordinates - as an array because of simd layout
     /// tl, tr, bl, br 
-    x: [f32; 4],
+    pub x: [f32; 4],
     /// y coordinates - as an array because of simd layout
     /// top left, top right, bottom left, bottom right 
-    y: [f32; 4],
+    pub y: [f32; 4],
     /// Z-index is an int in order to achieve z-order sortability
-    z: f32,
+    pub z: f32,
     /// Internal data of the rectangle
-    pub(crate) data: NodeData<T>,
+    pub data: NodeData<T>,
 }
 
 impl<T: Copy + Clone> Rect<T> {
@@ -98,6 +98,19 @@ impl<T: Copy + Clone> Rect<T> {
     {
         self.y[2] = self.y[0] + height;
         self.y[3] = self.y[1] + height;
+    }
+}
+
+impl<T: Copy + Clone> From<NodeData<T>> for Rect<T> {
+    fn from(data: NodeData<T>)
+    -> Self 
+    {
+        Self {    
+            x: [0.0; 4],
+            y: [0.0; 4],
+            z: 0.0,
+            data: data,
+        }
     }
 }
 

@@ -47,4 +47,20 @@ impl<T: Copy + Clone> NodeData<T> {
             data,
         }
     }
+
+    /// Creates an empty node
+    pub fn empty(flex_direction: FlexDirection,
+               data: T)
+    -> Self {
+        Self {
+            min_width: None,
+            min_height: None,
+            max_width: None,
+            max_height: None,
+            width: None,
+            height: None,
+            flex_direction: flex_direction,
+            data: data,
+        }
+    }
 }

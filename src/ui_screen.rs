@@ -33,22 +33,13 @@ impl<T: Copy + Clone> UiScreen<T> {
         self
     }
 
-    /// Refreshes the UiScreen, returns if the frame has to be redrawn or not
-    #[inline]
-    pub(crate) fn layout(&mut self, root_width: f32, root_height: f32)
-    -> bool 
+    /// Converts the UI into a vertex buffer
+    pub fn into_rectangles(&mut self, root_width: f32, root_height: f32)
+    -> Vec<Rect<T>>
     {
         self.root.borrow_mut().data.width = Some(root_width);
         self.root.borrow_mut().data.height = Some(root_height);
 
-        // todo
-        true
-    }
-
-    /// Converts the UI into a vertex buffer
-    pub fn into_rectangles(&self)
-    -> Vec<Rect<T>>
-    {
         let mut cur_offset_width = 0.0;
         let mut cur_offset_height = 0.0;
         let parent_width = self.root.borrow().data.width.unwrap().clone();
