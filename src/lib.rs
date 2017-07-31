@@ -1,6 +1,8 @@
-extern crate rctree;
 extern crate simd;
 
+// Forked from https://github.com/SimonSapin/rust-forest/blob/master/rctree/lib.rs
+// because the crate is not available anymore on crates.io. MIT License Simon Sapin
+pub mod rctree;
 pub mod rect;
 pub mod ui_screen;
 pub mod node_data;
