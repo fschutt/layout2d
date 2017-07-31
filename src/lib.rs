@@ -4,7 +4,6 @@ extern crate simd;
 pub mod rect;
 pub mod ui_screen;
 pub mod node_data;
-pub mod abs;
 
 pub use rctree::NodeRef as NodeRef;
 pub use rect::Rect;
