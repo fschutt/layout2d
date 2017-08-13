@@ -3,13 +3,13 @@ extern crate simd;
 use node_data::NodeData;
 
 /// A finite rectangle in pixel coordinates that will end up on the screen
-#[derive(Debug)]
-pub struct Rect<T: Copy + Clone> {
+#[derive(Debug, Clone)]
+pub struct Rect<T: Clone> {
     /// x coordinates - as an array because of simd layout
-    /// tl, tr, bl, br 
+    /// tl, tr, bl, br
     pub x: [f32; 4],
     /// y coordinates - as an array because of simd layout
-    /// top left, top right, bottom left, bottom right 
+    /// top left, top right, bottom left, bottom right
     pub y: [f32; 4],
     /// Z-index is an int in order to achieve z-order sortability
     pub z: f32,
@@ -17,7 +17,7 @@ pub struct Rect<T: Copy + Clone> {
     pub data: NodeData<T>,
 }
 
-impl<T: Copy + Clone> Rect<T> {
+impl<T: Clone> Rect<T> {
 
     /// Creates a new rectangle
     #[inline]
@@ -101,11 +101,11 @@ impl<T: Copy + Clone> Rect<T> {
     }
 }
 
-impl<T: Copy + Clone> From<NodeData<T>> for Rect<T> {
+impl<T: Clone> From<NodeData<T>> for Rect<T> {
     fn from(data: NodeData<T>)
-    -> Self 
+    -> Self
     {
-        Self {    
+        Self {
             x: [0.0; 4],
             y: [0.0; 4],
             z: 0.0,
@@ -120,7 +120,7 @@ impl<T: Copy + Clone> From<NodeData<T>> for Rect<T> {
 fn bench_rotate_center(b: &mut test::Bencher) {
     let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0, DebugColor::yellow());
 
-    b.iter(|| { 
+    b.iter(|| {
         rect.rotate_center(rand::random::<f32>());
     })
 }
@@ -131,7 +131,7 @@ fn bench_rotate_center(b: &mut test::Bencher) {
 fn bench_translate(b: &mut test::Bencher) {
     let mut rect = Rect::new(200.0, 400.0, 400.0, 600.0, 0.0, DebugColor::yellow());
 
-    b.iter(|| { 
+    b.iter(|| {
         rect.translate(rand::random::<f32>(), rand::random::<f32>());
     })
 }

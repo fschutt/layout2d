@@ -6,21 +6,23 @@ use rctree::NodeRef;
 use node_data::{NodeData, FlexDirection};
 use rect::Rect;
 
-/// UI screen 
+/// UI screen
 #[derive(Debug)]
-pub struct UiScreen<T: Copy + Clone> {
+pub struct UiScreen<T: Clone> {
     /// Root node of the UI tree
     pub root: NodeRef<Rect<T>>,
 }
 
-impl<T: Copy + Clone> UiScreen<T> {
+impl<T: Clone> UiScreen<T> {
 
     /// Creates a new UiScreen
     #[inline]
-    pub fn new(initial_width: f32, initial_height: f32, data: NodeData<T>) 
-    -> Self 
+    pub fn new(initial_width: f32, initial_height: f32, data: NodeData<T>)
+    -> Self
     {
-        Self { root: NodeRef::new(Rect::new(0.0, initial_height, 0.0, initial_width, 0.0, data)) }
+        Self {
+            root: NodeRef::new(Rect::new(0.0, initial_height, 0.0, initial_width, 0.0, data))
+        }
     }
 
     /// Changes the default orientation for the root element from row to column
@@ -49,8 +51,8 @@ impl<T: Copy + Clone> UiScreen<T> {
         let root_sibling_count = 0;
         let root_level_children = 1;
 
-        ui_screen_to_dp_list::<T>(&self.root, min_z_index, max_z_index, 
-                             root_level_children, root_sibling_count, 
+        ui_screen_to_dp_list::<T>(&self.root, min_z_index, max_z_index,
+                             root_level_children, root_sibling_count,
                              parent_width, parent_height, 0.0, 0.0,
                              &mut cur_offset_width, &mut cur_offset_height)
     }
@@ -63,7 +65,7 @@ impl<T: Copy + Clone> UiScreen<T> {
 /// sibling_count is 1 for root
 /// **WARNING**: The root node have a width and a height (usually the case when
 /// you create the UiScreen via `.new()`)
-fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32, max_z: f32,
+fn ui_screen_to_dp_list<T: Clone>(current: &NodeRef<Rect<T>>,  min_z: f32, max_z: f32,
                            sibling_count: u32, sibling_index: u32,
                            parent_width: f32, parent_height: f32,
                            parent_offset_left: f32, parent_offset_top: f32,
@@ -71,7 +73,7 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
 -> Vec<Rect<T>>
 {
     use std::clone::Clone;
-    
+
     let mut rectangles = Vec::<Rect<T>>::new();
 
     let mut width = parent_width;
@@ -80,7 +82,7 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
     if let Some(parent) = current.parent() {
         if parent.borrow().data.flex_direction == FlexDirection::Row {
             width /= (sibling_count - sibling_index) as f32;
-        } else { 
+        } else {
             height /= (sibling_count - sibling_index) as f32;
         }
     }
@@ -107,13 +109,13 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
 
     // if the width is smaller than the minimal width, overflow the parent
     if let Some(min_width) = current.borrow().data.min_width {
-        if width < min_width {    
+        if width < min_width {
             width = min_width;
         }
     }
 
     if let Some(min_height) = current.borrow().data.min_height {
-        if height < min_height {   
+        if height < min_height {
             height = min_height;
         }
     }
@@ -128,18 +130,22 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
             *cur_offset_left += width;
         } else {
             *cur_offset_top += height;
-        }     
+        }
     }
 
-    // z sorting is done by recursively dividing the range between max_z and 
+    // z sorting is done by recursively dividing the range between max_z and
     // min_z into segments proportional to the siblings - this way the children won't overlap the parent
-    let cur_z_stepping = (max_z - min_z) / (sibling_count as f32 + 1.0); 
+    let cur_z_stepping = (max_z - min_z) / (sibling_count as f32 + 1.0);
     let z_index_current_node = cur_z_stepping * (sibling_index as f32 + 1.0);
 
     // construct rectangle and repeat for children
     // mark if min-width or max-width has modified the remaining width for siblings
-    let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, 
-                                z_index_current_node, current.borrow().data.clone());
+    let data = current.borrow().data.clone();
+    let cur_rect = Rect::new_wh(offset_left, offset_top, width as f32, height as f32, z_index_current_node, data);
+
+    // flip y axis and update self (for external libraries)
+    // this step can be avoided
+    *current.borrow_mut() = cur_rect.clone();
 
     // iterate children nodes
     let children_count = current.children().count();
@@ -152,13 +158,13 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
     let new_offset_top = offset_top.clone();
     let mut offset_top_zeroed = 0.0;
     let mut offset_left_zeroed = 0.0;
-    
+
     for (index, node) in current.children().enumerate() {
-        rectangles.append(&mut ui_screen_to_dp_list::<T>(&node, z_index_current_node, new_max_z, 
+        rectangles.append(&mut ui_screen_to_dp_list::<T>(&node, z_index_current_node, new_max_z,
                                                      children_count as u32, index as u32,
                                                      self_width, self_height,
                                                      new_offset_left, new_offset_top,
-                                                     &mut offset_left_zeroed, &mut offset_top_zeroed)); 
+                                                     &mut offset_left_zeroed, &mut offset_top_zeroed));
     }
 
     rectangles.push(cur_rect);
@@ -170,7 +176,7 @@ fn ui_screen_to_dp_list<T: Copy + Clone>(current: &NodeRef<Rect<T>>,  min_z: f32
 // with rendering (use "vblank_mode=0 cargo bench") to get correct results: ~1.9 ms
 #[bench]
 fn bench_ui_screen_layout_simple(b: &mut test::Bencher) {
-    
+
     extern crate rand;
 
     use input;
@@ -185,22 +191,22 @@ fn bench_ui_screen_layout_simple(b: &mut test::Bencher) {
 
     // Top bar, 100 - 200 pixels tall, stretches full window
     let top_bar_wrapper = NodeRef::new(NodeData::new(
-            None, None, None, None, None, None, 
+            None, None, None, None, None, None,
             FlexDirection::Column, DebugColor::green()));
 
     // Main explorer view, stretches all sides
     let explorer_wrapper = NodeRef::new(NodeData::new(
-        None, None, None, None, None, None, 
+        None, None, None, None, None, None,
         FlexDirection::Row, DebugColor::blue()));
 
             // navigation side bar
             let navigation_pane = NodeRef::new(NodeData::new(
-                Some(500.0), None, Some(700.0), None, None, None, 
+                Some(500.0), None, Some(700.0), None, None, None,
                 FlexDirection::Column, DebugColor::red()));
 
             // file list
             let file_list_view = NodeRef::new(NodeData::new(
-                None, None, None, None, Some(50.0), None, 
+                None, None, None, None, Some(50.0), None,
                 FlexDirection::Column, DebugColor::blue()));
 
     // drawing order

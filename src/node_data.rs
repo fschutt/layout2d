@@ -5,8 +5,8 @@ pub enum FlexDirection {
     Row,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub struct NodeData<T: Copy + Clone> {
+#[derive(Debug, Clone)]
+pub struct NodeData<T: Clone> {
     /// Minimum width of this node
     pub min_width: Option<f32>,
     /// Minimum height of this node
@@ -25,11 +25,11 @@ pub struct NodeData<T: Copy + Clone> {
     pub data: T,
 }
 
-impl<T: Copy + Clone> NodeData<T> {
+impl<T: Clone> NodeData<T> {
     /// Creates a new node
-    pub fn new(min_width: Option<f32>, 
-               min_height: Option<f32>, 
-               max_width: Option<f32>, 
+    pub fn new(min_width: Option<f32>,
+               min_height: Option<f32>,
+               max_width: Option<f32>,
                max_height: Option<f32>,
                width: Option<f32>,
                height: Option<f32>,
