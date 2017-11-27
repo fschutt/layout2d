@@ -1,5 +1,3 @@
-extern crate simd;
-
 use node_data::NodeData;
 
 /// A finite rectangle in pixel coordinates that will end up on the screen
@@ -9,7 +7,7 @@ pub struct Rect<T: Clone> {
     /// tl, tr, bl, br
     pub x: [f32; 4],
     /// y coordinates - as an array because of simd layout
-    /// top left, top right, bottom left, bottom right
+    /// tl, tr, bl, br
     pub y: [f32; 4],
     /// Z-index is an int in order to achieve z-order sortability
     pub z: f32,
@@ -42,9 +40,47 @@ impl<T: Clone> Rect<T> {
         Self::new(offset_top, bottom, offset_left, right, z, data)
     }
 
-    // rotates the rectangle around its center
+    // Rotates a rectangle around its center, no SIMD
+    #[cfg(not(feature = "use_simd"))]
     pub fn rotate_center(&mut self, in_angle: f32)
     {
+        let center_y = ((self.y[1] - self.y[2]) * 0.5) + self.y[2];
+        let center_x = ((self.x[1] - self.x[2]) * 0.5) + self.x[2];
+
+        self.x[0] -= center_x; self.x[1] -= center_x;
+        self.x[2] -= center_x; self.x[3] -= center_x;
+
+        self.y[0] -= center_y; self.y[1] -= center_y;
+        self.y[2] -= center_y; self.y[3] -= center_y;
+
+        // calculate rotation
+        let k_angle = in_angle.to_radians();
+        let s = k_angle.sin();
+        let c = k_angle.cos();
+
+        let tl_x = (self.x[0] * c) - (self.y[0] * s);
+        let tr_x = (self.x[1] * c) - (self.y[1] * s);
+        let bl_x = (self.x[2] * c) - (self.y[2] * s);
+        let br_x = (self.x[3] * c) - (self.y[3] * s);
+
+        let tl_y = (self.x[0] * s) + (self.y[0] * c);
+        let tr_y = (self.x[1] * s) + (self.y[1] * c);
+        let bl_y = (self.x[2] * s) + (self.y[2] * c);
+        let br_y = (self.x[3] * s) + (self.y[3] * c);
+
+        self.x[0] = tl_x; self.x[1] = tr_x; self.x[2] = bl_x; self.x[3] = br_x;
+        self.y[0] = tl_y; self.y[1] = tr_y; self.y[2] = bl_y; self.y[3] = br_y;
+
+        self.x[0] += center_x; self.x[1] += center_x; self.x[2] += center_x; self.x[3] += center_x;
+        self.y[0] += center_y; self.y[1] += center_y; self.y[2] += center_y; self.y[3] += center_y;
+    }
+
+    // Rotates the rectangle around its center, using SIMD
+    #[cfg(feature = "use_simd")]
+    pub fn rotate_center(&mut self, in_angle: f32)
+    {
+        use simd;
+
         let center_y = ((self.y[0] - self.y[2]) * 0.5) + self.y[2];
         let center_x = ((self.x[1] - self.x[0]) * 0.5) + self.x[0];
 
@@ -70,9 +106,20 @@ impl<T: Clone> Rect<T> {
         simd_y_dir.store(&mut self.y, 0);
     }
 
-    // translates a rectangle
+    // Translates a rectangle, no SIMD support
+    #[cfg(not(feature = "use_simd"))]
     pub fn translate(&mut self, x: f32, y: f32)
     {
+        self.x[0] += x; self.x[1] += x; self.x[2] += x; self.x[3] += x;
+        self.y[0] += y; self.y[1] += y; self.y[2] += y; self.y[3] += x;
+    }
+
+    // Translates a rectangle, with SIMD
+    #[cfg(feature = "use_simd")]
+    pub fn translate(&mut self, x: f32, y: f32)
+    {
+        use simd;
+
         let simd_x_dir = simd::f32x4::load(&self.x, 0) + simd::f32x4::splat(x);
         let simd_y_dir = simd::f32x4::load(&self.y, 0) + simd::f32x4::splat(y);
 

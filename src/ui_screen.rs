@@ -1,6 +1,5 @@
 //! Ui screen is a single screen that is visible at one time
 //! Uses rctree for reference counted nodes
-extern crate simd;
 
 use rctree::NodeRef;
 use node_data::{NodeData, FlexDirection};
